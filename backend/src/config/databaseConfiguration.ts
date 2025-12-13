@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';  // Import Mongoose for MongoDB connection
-import { PrismaClient } from '@prisma/client'; // Import required for PostgreSQL client
 import { Default } from './default';
 import config from './config';
+import { prisma } from './prisma';
 
 
 /**
@@ -37,7 +37,7 @@ export class DatabaseConfiguration extends Default {
 
         // --- 2. PostgreSQL Connection (Prisma Client) ---
         try {
-            const prisma = new PrismaClient();
+            await prisma.$connect();
             this.logger.info('********************************************');
             this.logger.info('PRISMA CLIENT (PostgreSQL) connected sucessfully');
             this.logger.info('********************************************');
