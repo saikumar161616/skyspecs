@@ -156,7 +156,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import bodyparser from 'body-parser'; // the body-parser middleware is used to parse incoming request bodies , so that the data sent by client (JSON or URl Encoded params) can be easily accessed
 import cors, { CorsOptions } from 'cors';
-import * as morgan from 'morgan';
+import morgan from 'morgan';
 import http from 'http';
 
 import helmet from 'helmet';
@@ -167,13 +167,11 @@ import databaseConfiguration from '../src/config/databaseConfiguration';
 
 // Create the express app instance
 const app = express();
-app.use(morgan.compile('dev'));
+app.use(morgan('dev'));
 
 // Parse incoming req bodies as URl-Encoded data and JSON size limitsCORS_ORIGINS
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json({ limit: '10mb' }));
-
-console.log("CORS_ORIGINS", config.SERVER.CORS_ORIGINS);
 
 // Configure CORS options with dynamic validation based on config
 interface CorsOptionsDelegate extends CorsOptions {

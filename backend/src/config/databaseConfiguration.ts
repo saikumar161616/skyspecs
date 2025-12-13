@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';  // Import Mongoose for MongoDB connection
 import { Default } from './default';
 import config from './config';
-import { prisma } from './prisma';
+import prisma  from './prisma';
 
 
 /**

@@ -1,5 +1,5 @@
 import joi from 'joi';
-import { ROLE } from '../../constants/feild.constants';
+import { ROLE, STATUS } from '../../constants/feild.constants';
 
 
 export const createUserSchemaValidastor = joi.object({
@@ -13,11 +13,12 @@ export const updateUserSchemaValidator = joi.object({
     name : joi.string().min(3),
     email: joi.string().email(),
     passwordHash: joi.string().min(6),
+    status : joi.string().valid(...Object.values(STATUS)),
 });
 
 export const loginUserSchemaValidator = joi.object({
     email: joi.string().email().required(),
-    passwordHash: joi.string().min(6).required(),
+    password: joi.string().min(6).required(),
 });
 
 export const changePasswordSchemaValidator = joi.object({
