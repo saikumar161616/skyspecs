@@ -8,3 +8,8 @@ export const ROLE = {
     ENGINEER: 'ENGINEER',
     VIEWER: 'VIEWER'
 };
+
+export const DATA_SOURCES = {
+    DRONE : 'DRONE',
+    MANUAL: 'MANUAL',
+};
