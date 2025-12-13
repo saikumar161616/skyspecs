@@ -14,8 +14,13 @@ model User {
   role  Role
   status String
   passwordHash String
+
+  //Separate relations for created and updated turbines
+  turbinesCreated Turbine[] @relation("TurbineCreatedBy")
+  turbinesUpdated Turbine[] @relation("TurbineUpdatedBy")
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {
@@ -32,6 +37,14 @@ model Turbine {
   lat        Float?
   lng        Float?
   inspections Inspection[]
+  status     String
+
+  creator       User?     @relation("TurbineCreatedBy", fields: [createdBy], references: [id]) 
+  updater       User?     @relation("TurbineUpdatedBy", fields: [updatedBy], references: [id]) 
+
+  createdBy  String?
+  updatedBy  String?
+
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

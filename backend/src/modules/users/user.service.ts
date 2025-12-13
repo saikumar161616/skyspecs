@@ -59,7 +59,6 @@ class UserService extends Default {
 
             // Check if user exists and check status
             const existingUser = await prisma.user.findUnique({ where: { id: userId } });
-            if (existingUser?.status === STATUS.INACTIVE) throw new CustomError(USER_MSG_CONSTANTS.USER_INACTIVE, HTTP_STATUS.BAD_REQUEST);
             if (!existingUser) throw new CustomError(USER_MSG_CONSTANTS.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
 
             // If password is being updated, hash the new password
