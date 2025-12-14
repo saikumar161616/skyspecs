@@ -3,6 +3,7 @@ import { CustomError } from '../../error-handlers/custom.error';
 import HTTP_STATUS from '../../constants/http.constants';
 import REPAIR_PLAN_MSG_CONSTANTS from './repairPlan.constant';
 import { prisma } from '../../config/prisma';
+import { ROLE, PRIORITY } from '../../constants/feild.constants';
 
 class RepairPlanService extends Default {
     constructor() {
@@ -57,21 +58,82 @@ class RepairPlanService extends Default {
         }
     }
 
-    async fetchRepairPlans() {
-        try {
-            this.logger.info('Inside RepairPlanService - fetchRepairPlans method');
 
-            const repairPlans = await prisma.repairPlan.findMany();
+    /**
+     * @method RepairPlanService:generateRepairPlan
+     * @description Generates a repair plan based on inspection findings.
+     * @param inspectionId 
+     * @returns 
+    **/
+    async generateRepairPlan(inspectionId: string, fetch: boolean = false) {
+        try {
+            this.logger.info('Inside RepairPlanService - generateRepairPlan method');
+
+            if (fetch) {
+                const existingPlan = await prisma.repairPlan.findUnique({ where: { inspectionId } });
+                if (!existingPlan) {
+                    throw new CustomError(REPAIR_PLAN_MSG_CONSTANTS.REPAIR_PLAN_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+                }
+                return {
+                    message: REPAIR_PLAN_MSG_CONSTANTS.REPAIR_PLAN_FETCHED,
+                    data: existingPlan,
+                };
+            }
+
+            // 1. Fetch all findings for this inspection
+            const findings = await prisma.finding.findMany({ where: { inspectionId } });
+
+
+            if (findings.length === 0) {
+                throw new CustomError(REPAIR_PLAN_MSG_CONSTANTS.NO_FINDINGS_FOR_INSPECTION, HTTP_STATUS.NOT_FOUND);
+            }
+
+            // 2. Calculate Total Cost
+            const totalEstimatedCost = findings.reduce((sum, finding) => sum + (finding.estimatedCost || 0), 0);
+
+            // 3. Determine Priority based on Max Severity
+            // Rule: HIGH ≥ 5, MEDIUM 3–4, LOW < 3
+            const maxSeverity = Math.max(...findings.map(f => f.severity));
+
+            let priority: 'HIGH' | 'MEDIUM' | 'LOW' = 'LOW';
+            if (maxSeverity >= 5) {
+                priority = 'HIGH';
+            } else if (maxSeverity >= 3) {
+                priority = 'MEDIUM';
+            }
+
+            // 4. Create or Update (Upsert) the Repair Plan
+            // We use upsert to handle cases where a plan might be regenerated
+            const repairPlan = await prisma.repairPlan.upsert({
+                where: { inspectionId },
+                update: {
+                    priority,
+                    totalEstimatedCost,
+                    snapshotJson: findings, // Save current findings as a snapshot
+                    createdAt: new Date()   // Update timestamp effectively
+                },
+                create: {
+                    inspectionId,
+                    priority,
+                    totalEstimatedCost,
+                    snapshotJson: findings
+                }
+            });
 
             return {
-                message: REPAIR_PLAN_MSG_CONSTANTS.REPAIR_PLAN_FETCHED,
-                data: repairPlans,
+                message: REPAIR_PLAN_MSG_CONSTANTS.REPAIR_PLAN_CREATE,
+                data: repairPlan,
             };
+
         } catch (error: any) {
-            this.logger.error(`Error in fetchRepairPlans: ${error.message}`);
-            throw new CustomError('Error fetching repair plans', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+            this.logger.error(`Inside RepairPlanService - generateRepairPlan method - Error: ${error.message}`);
+            // Rethrow specific errors or generic internal server error
+            if (error instanceof CustomError) throw error;
+            throw new CustomError('Error generating repair plan', HTTP_STATUS.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 }
 
 export default new RepairPlanService();

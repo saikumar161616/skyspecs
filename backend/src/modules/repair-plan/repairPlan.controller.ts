@@ -57,10 +57,11 @@ class RepairPlanController extends Default {
         }
     }
 
-    async fetchRepairPlansController(req: Request, res: Response) {
+    async generateRepairPlansController(req: any, res: any) {
         try {
             this.logger.info('Inside RepairPlanController - fetchRepairPlansController method');
-            const response = await repairPlanService.fetchRepairPlans();
+            req.query.fetch = req.query.fetch ? true : false;
+            const response = await repairPlanService.generateRepairPlan(req.params.inspectionId, req.query.fetch);
             return res.status(HTTP_STATUS.OK).json({
                 status: true,
                 message: response.message,

@@ -115,6 +115,42 @@ class InspectionController extends Default {
             });
         }
     }
+
+
+    /**
+     * @method InspectionController:fetchInspectionByIdController
+     * @description Controller to handle fetching inspection by id.
+     * @param req 
+     * @param res 
+     * @returns 
+    **/
+    async fetchInspectionByIdController(req: any, res: any) {
+        try {
+            this.logger.info('Inside InspectionController - fetchInspectionByIdController method');
+            const response = await inspectionService.fetchInspectionById(req.params.id);
+            if (!response) throw new CustomError('Failed to fetch inspection', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+            
+            return res.status(HTTP_STATUS.OK).json({
+                status: true,
+                message: response.message,
+                data: response.data
+            });
+        }
+        catch (error: any) {
+            this.logger.error(`Inside InspectionController - fetchInspectionByIdController method - Error while fetching inspection by id: ${error}`);
+            if (error instanceof CustomError) {
+                return res.status(error.statusCode).json({
+                    message: error.message || error,
+                    status: false
+                });
+            }
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                status: false,
+                message: error
+            });
+        }
+    }   
+    
    
 };
 

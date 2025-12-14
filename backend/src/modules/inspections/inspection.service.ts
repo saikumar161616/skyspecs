@@ -140,6 +140,38 @@ class InspectionService extends Default {
     }
 
 
+    /**
+     *  @method InspectionService:fetchInspectionById
+     * @description Service to fetch inspection by id.
+     * @param id 
+     * @returns 
+    **/
+    async fetchInspectionById(id: string) {
+        try {
+            this.logger.info('Inside InspectionService - fetchInspectionById method');
+
+            const inspection = await prisma.inspection.findUnique({
+                where: { id },
+                include: {
+                    turbine: true,
+                    inspector: { select: { id: true, name: true, email: true, role: true } },
+                    creator: { select: { id: true, name: true, email: true, role: true } }
+                }
+            });
+
+            if (!inspection) throw new CustomError(INSPECTION_MSG_CONSTANTS.INSPECTION_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+
+            return {
+                message: INSPECTION_MSG_CONSTANTS.INSPECTION_FETCHED,
+                data: inspection
+            };
+        }
+        catch (error: any) {
+            this.logger.error(`Inside InspectionService - fetchInspectionById method - Error while fetching inspection by id: ${error}`);
+            throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
 }
 

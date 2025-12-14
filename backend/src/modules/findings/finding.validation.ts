@@ -6,6 +6,7 @@ export const createFindingSchemaValidator = joi.object({
     severity: joi.number().integer().min(1).max(10).required(),
     estimatedCost: joi.number().positive().required(),
     notes: joi.string().optional().allow(null),
+    inspectionId: joi.string().required(),
 });
 
 export const updateFindingSchemaValidator = joi.object({

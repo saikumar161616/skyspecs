@@ -43,18 +43,7 @@
 // }
 
 
-
-
-
-
 //////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
 
 
 import React from 'react';
@@ -67,6 +56,7 @@ import Turbines from '../pages/turbines';
 import Inspections from '../pages/inspection';
 import Users from '../pages/users';
 import InspectionForm from '../pages/inspectionForm';
+import InspectionDetails from './inspectionDetails';
 
 // import InspectionDetails from './pages/InspectionDetails';
 
@@ -101,10 +91,9 @@ const AppRoutes = () => {
         } />
 
         {/* Edit Existing Inspection */}
-        <Route path="inspections/:id/edit" element={
-          <ProtectedRoute><InspectionForm /></ProtectedRoute>
+        <Route path="inspections/:id" element={
+          <ProtectedRoute><InspectionDetails /></ProtectedRoute>
         } />
-     
 
         <Route index element={<Navigate to="/turbines" />} />
       </Route>

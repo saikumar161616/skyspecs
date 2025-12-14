@@ -57,10 +57,10 @@ class FindingController extends Default {
         }
     }
 
-    async fetchFindingsController(req: Request, res: Response) {
+    async fetchFindingsByInspectionController(req: Request, res: Response) {
         try {
             this.logger.info('Inside FindingController - fetchFindingsController method');
-            const response = await findingService.fetchFindings();
+            const response = await findingService.fetchFindingsByInspectionId(req.params.inspectionId);
             return res.status(HTTP_STATUS.OK).json({
                 status: true,
                 message: response.message,

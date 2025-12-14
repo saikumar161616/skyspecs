@@ -31,7 +31,13 @@ router.patch('/:id',
 router.get('/',
     (req: Request, res: Response, next: NextFunction) => AuthMiddleware.verifyToken(req, res, next),
     (req: Request, res: Response) => InspectionController.fetchInspectionsController(req, res)
+);
 
+
+// fetch inspection by id
+router.get('/:id',
+    (req: Request, res: Response, next: NextFunction) => AuthMiddleware.verifyToken(req, res, next),
+    (req: Request, res: Response) => InspectionController.fetchInspectionByIdController(req, res)
 );
 
 

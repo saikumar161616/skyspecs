@@ -43,13 +43,14 @@ export const inspectionApi = {
 
 // --- Findings ---
 export const findingApi = {
-  create: (data: any) => client.post('/finding', data),
+  create: (data: any, inspectionId: any) => client.post(`/finding/${inspectionId}`, data),
   update: (id: string, data: any) => client.put(`/finding/${id}`, data),
-  getAll: () => client.get('/finding'), // Usually filtered by inspectionId in real apps
+  getFindingsById: (inspectionId: any) => client.get(`/finding/${inspectionId}`), // Usually filtered by inspectionId in real apps
 };
 
 // --- Repair Plans ---
 export const repairPlanApi = {
-  getByInspectionId: (inspectionId: string) =>  client.get(`/repair-plan?inspectionId=${inspectionId}`),
+  getByInspectionId: (inspectionId: string) =>  client.get(`/repair-plan/${inspectionId}?fetch=${true}`),
   create: (data: { inspectionId: string }) =>  client.post('/repair-plan', data),
+  generateRepairPlan: (inspectionId: string) =>  client.get(`/repair-plan/${inspectionId}`),
 };

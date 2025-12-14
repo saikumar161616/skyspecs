@@ -19,7 +19,7 @@ class FindingService extends Default {
             // Associate the finding with the inspection
             if (inspectionId) inspection = await prisma.inspection.findUnique({ where: { id: inspectionId } });
             if (!inspection) throw new CustomError(FINDING_MSG_CONSTANTS.INSPECTION_FINDINGS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
-            if (reqUser && reqUser.role !== ROLE.ENGINEER) throw new CustomError('Unauthorized to create finding', HTTP_STATUS.UNAUTHORIZED);
+            if (reqUser && reqUser.role == ROLE.VIEWER) throw new CustomError('Unauthorized to create finding', HTTP_STATUS.UNAUTHORIZED);
 
 
             const newFinding = await prisma.finding.create({
@@ -36,6 +36,7 @@ class FindingService extends Default {
                 data: newFinding,
             };
         } catch (error: any) {
+            console.log(error);
             this.logger.error(`Error in createFinding: ${error.message}`);
             throw new CustomError('Error creating finding', HTTP_STATUS.INTERNAL_SERVER_ERROR);
         }
@@ -68,11 +69,11 @@ class FindingService extends Default {
         }
     }
 
-    async fetchFindings() {
+    async fetchFindingsByInspectionId(inspectionId: string) {
         try {
             this.logger.info('Inside FindingService - fetchFindings method');
 
-            const findings = await prisma.finding.findMany();
+            const findings = await prisma.finding.findMany({where: { inspectionId }, include : { creator: { select: { id: true, name: true, email: true } } }});
 
             return {
                 message: FINDING_MSG_CONSTANTS.FINDING_FETCHED,
