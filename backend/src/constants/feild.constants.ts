@@ -13,3 +13,10 @@ export const DATA_SOURCES = {
     DRONE : 'DRONE',
     MANUAL: 'MANUAL',
 };
+
+export const FINDING_CATEGORY = {
+    BLADE_DAMAGE : 'BLADE_DAMAGE',
+    LIGHTNING : 'LIGHTNING',
+    EROSION   : 'EROSION',
+    UNKNOWN : 'UNKNOWN',
+}

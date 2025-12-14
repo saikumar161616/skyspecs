@@ -19,10 +19,14 @@ model User {
   turbinesCreated Turbine[] @relation("TurbineCreatedBy")
   turbinesUpdated Turbine[] @relation("TurbineUpdatedBy")
 
-  //Separate relations for create and updated turbines
+  //Separate relations for create and updated Inspections
   inpsectionCreated Inspection[] @relation("InspectionCreatedBy")
   inspectionUpdated Inspection[] @relation("InspectionUpdatedBy")
   inspectionUser    Inspection[] @relation("InspectionUserId")
+
+  //Separate relations for create and update Findings
+  findingsCreated Finding[] @relation("FindingCreatedBy")
+  findingsUpdated Finding[] @relation("FindingUpdatedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,7 +66,6 @@ model Inspection {
   inspectorId   String
 
   dataSource    DataSource
-  status        String     @default("ACTIVE")
   rawPackageUrl String?
   turbine       Turbine  @relation(fields: [turbineId], references: [id])
   turbineId     String
@@ -93,7 +96,13 @@ model Finding {
   notes         String?
   inspection    Inspection @relation(fields: [inspectionId], references: [id])
   inspectionId  String
-  createdAt     DateTime @default(now())
+  createdAt     DateTime @default(now())  
+
+  creator       User?    @relation("FindingCreatedBy", fields: [createdBy], references:[id])
+  updater       User?    @relation("FindingUpdatedBy", fields: [updatedBy], references:[id])
+
+  createdBy     String?
+  updatedBy     String?
 
   @@index([inspectionId])
 }
