@@ -152,6 +152,42 @@ class UserController extends Default {
         }       
     }
 
+
+    /**
+     * @method UserController:getUsersByRoleController
+     * @description Controller to handle fetching users by role.
+     * @param req 
+     * @param res
+     * @returns
+    **/
+    async getUsersByRoleController(req: Request, res: Response) {
+        try {
+            this.logger.info('Inside UserController - getUsersByRoleController method');
+            const roleArray = req.params.role.split(',');
+            const response =  await userService.fetchUsersByRole(roleArray);
+            if (!response) throw new CustomError('Failed to fetch users by role', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+
+            return res.status(HTTP_STATUS.OK).json({
+                status: true,
+                message: response.message,
+                data: response.data
+            });
+        }
+        catch (error: any) {
+            this.logger.error(`Inside UserController - getUsersByRoleController method - Error while fetching users by role: ${error}`);
+            if (error instanceof CustomError) {
+                return res.status(error.statusCode).json({
+                    message: error.message || error,
+                    status: false
+                });
+            }
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                status: false,
+                message: error      
+            });
+        }       
+    }
+
 };
 
 export default new UserController();

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Form, Row, Col, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { inspectionApi } from '../api/rest';
+import { inspectionApi, turbineApi } from '../api/rest';
 import { toast } from 'react-toastify';
 
 interface Inspection {
@@ -12,20 +12,47 @@ interface Inspection {
     inspector: { name: string };
 }
 
+interface Turbine {
+    id: string;
+    name: string;
+    manufacturer?: string;
+    status: string;
+}
+
 const Inspections: React.FC = () => {
     const [inspections, setInspections] = useState<Inspection[]>([]);
+    const [turbines, setTurbines] = useState<Turbine[]>([]);
     const [filters, setFilters] = useState({ turbineId: '', date: '', dataSource: '' });
+
+
+    // Check if any filter is applied
+    const hasActiveFilters = filters.turbineId !== '' || filters.date !== '' || filters.dataSource !== '';
+
+
+    const fetchTurbines = async () => {
+        try {
+            const res = await turbineApi.getAll();
+            setTurbines(res.data.data || []);
+        } catch (error) {
+            toast.error('Failed to load turbines');
+            console.error('Error fetching turbines:', error);
+        }
+    };
 
     const fetchInspections = async () => {
         try {
             // Pass filters as query params
             const params = new URLSearchParams(filters as any).toString();
-            const res = await inspectionApi.getAll();
+            const res = await inspectionApi.getAll(params ? { ...filters } : undefined);
             setInspections(res.data.data);
         } catch (error) {
             toast.error('Failed to load inspections');
         }
     };
+
+    useEffect(() => {
+        fetchTurbines();
+    }, []);
 
     useEffect(() => {
         fetchInspections();
@@ -43,16 +70,45 @@ const Inspections: React.FC = () => {
                     <Form.Control
                         type="date"
                         placeholder="Filter by Date"
+                        value={filters.date}
                         onChange={e => setFilters({ ...filters, date: e.target.value })}
                     />
                 </Col>
                 <Col md={3}>
-                    <Form.Select onChange={e => setFilters({ ...filters, dataSource: e.target.value })}>
+                    <Form.Select
+                        value={filters.dataSource}
+                        onChange={e => setFilters({ ...filters, dataSource: e.target.value })}>
                         <option value="">All Data Sources</option>
                         <option value="DRONE">Drone</option>
                         <option value="MANUAL">Manual</option>
                     </Form.Select>
                 </Col>
+                <Col md={3}>
+                    <Form.Select
+                        value={filters.turbineId}
+                        onChange={e => setFilters({ ...filters, turbineId: e.target.value })}
+                    >
+                        <option value="">All Turbines</option>
+                        {turbines.map(turbine => (
+                            <option key={turbine.id} value={turbine.id}>
+                                {turbine.name} {turbine.manufacturer ? `(${turbine.manufacturer})` : ''}
+                            </option>
+                        ))}
+                    </Form.Select>
+                </Col>
+
+
+
+                {hasActiveFilters && (
+                    <Col md={3}>
+                        <Button
+                            variant="outline-secondary"
+                            onClick={() => setFilters({ turbineId: '', date: '', dataSource: '' })}
+                        >
+                            Clear Filters
+                        </Button>
+                    </Col>
+                )}
             </Row>
 
             <Table hover>

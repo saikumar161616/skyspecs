@@ -66,6 +66,7 @@ import Login from '../pages/login';
 import Turbines from '../pages/turbines';
 import Inspections from '../pages/inspection';
 import Users from '../pages/users';
+import InspectionForm from '../pages/inspectionForm';
 
 // import InspectionDetails from './pages/InspectionDetails';
 
@@ -94,9 +95,16 @@ const AppRoutes = () => {
           <ProtectedRoute><Inspections /></ProtectedRoute>
         } />
 
-        {/* <Route path="inspections/:id" element={
-          <ProtectedRoute><InspectionDetails /></ProtectedRoute>
-        } /> */}
+         {/* Create New Inspection (General or Specific via ?turbineId=) */}
+        <Route path="inspections/new" element={
+          <ProtectedRoute><InspectionForm /></ProtectedRoute>
+        } />
+
+        {/* Edit Existing Inspection */}
+        <Route path="inspections/:id/edit" element={
+          <ProtectedRoute><InspectionForm /></ProtectedRoute>
+        } />
+     
 
         <Route index element={<Navigate to="/turbines" />} />
       </Route>

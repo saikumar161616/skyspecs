@@ -21,7 +21,24 @@ class InspectionService extends Default {
         try {
             this.logger.info('Inside InspectionService - createInspection method');
 
-            if(reqUser.role !==  ROLE.ENGINEER) throw new CustomError('Unauthorized to create inspection', HTTP_STATUS.FORBIDDEN);
+            // if(reqUser.role !==  ROLE.ENGINEER) throw new CustomError('Unauthorized to create inspection', HTTP_STATUS.FORBIDDEN);
+
+            // Check if inspection already exists for this turbine on this date
+            const existingInspection = await prisma.inspection.findUnique({
+                where: {
+                    turbineId_date: {
+                        turbineId: inspectionData.turbineId,
+                        date: new Date(inspectionData.date)
+                    }
+                }
+            });
+
+            if (existingInspection) {
+                throw new CustomError(
+                    'An inspection already exists for this turbine on this date',
+                    HTTP_STATUS.CONFLICT
+                );
+            }
 
             await prisma.inspection.create({
                 data: {
@@ -84,11 +101,32 @@ class InspectionService extends Default {
      * @description Service to fetch inspections.
      * @returns 
     **/
-    async fetchInspections() {
+    async fetchInspections(date?: string, turbineId?: string, dataSource?: string) {
         try {
             this.logger.info('Inside InspectionService - fetchInspections method');
 
-            const inspections = await prisma.inspection.findMany({ where: { status: { equals: STATUS.ACTIVE } } });
+            let filter: any = {};
+            
+            if (date) {
+                const inspectionDate = new Date(date);
+                filter.date = inspectionDate;
+            }
+            if (turbineId) {
+                filter.turbineId = turbineId;
+            }
+            if (dataSource) {
+                filter.dataSource = dataSource;
+            }
+
+            const inspections = await prisma.inspection.findMany({
+                where: filter,
+                include: {
+                    turbine: true,
+                    inspector: { select: { id: true, name: true, email: true, role: true } },
+                    creator: { select: { id: true, name: true, email: true, role: true } }
+                }
+            });
+
 
             return {
                 message: INSPECTION_MSG_CONSTANTS.INSPECTION_FETCHED,

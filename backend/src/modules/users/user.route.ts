@@ -39,4 +39,11 @@ router.get('/',
 );
 
 
+// Get users by role
+router.get('/role/:role',
+    (req: Request, res: Response, next: NextFunction) => AuthMiddleware.verifyToken(req, res, next),
+    (req: Request, res: Response) => UserController.getUsersByRoleController(req, res)
+);
+
+
 export default router;

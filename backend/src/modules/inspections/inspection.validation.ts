@@ -6,7 +6,7 @@ export const createInspectionSchemaValidator = joi.object({
     date: joi.date().required(),
     inspectorId: joi.string().required(),
     dataSource: joi.string().valid(...Object.values(DATA_SOURCES)).required(),
-    rawPackageUrl: joi.string().uri().optional().allow(null),
+    rawPackageUrl: joi.string().uri().optional().allow(''),
     turbineId: joi.string().required(),
 });
 

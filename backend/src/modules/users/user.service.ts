@@ -115,7 +115,7 @@ class UserService extends Default {
                 data: token
             };
 
-            
+
         } catch (error: any) {
             this.logger.error(`Inside UserService - loginUser method - Error while logging in user: ${error}`);
             throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
@@ -135,7 +135,7 @@ class UserService extends Default {
             if (reqUser.role === ROLE.ENGINEER) throw new CustomError('You dont have access', HTTP_STATUS.FORBIDDEN);
 
             const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, status: true } });
-            
+
             return {
                 message: USER_MSG_CONSTANTS.USER_FETCHED,
                 data: users
@@ -144,8 +144,39 @@ class UserService extends Default {
             this.logger.error(`Inside UserService - fetchUsers method - Error while fetching users: ${error}`);
             throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
         }
-    }    
-    
+    }
+
+
+    /**
+     * @method UserService:fetchUsersByRole
+     * @description Service to fetch users by role.
+     * @param role 
+     * @returns 
+    **/
+    async fetchUsersByRole(role: any) {
+        try {
+            this.logger.info('Inside UserService - fetchUsersByRole method');
+
+            // need to fetch users by role and status active
+
+            // i need to implement where role can be more than one value ie array of roles
+
+
+            const users = await prisma.user.findMany({ where: { role: { in: role }, status: { equals: STATUS.ACTIVE } }, select: { id: true, name: true, email: true, role: true, status: true } });
+
+            return {
+                message: USER_MSG_CONSTANTS.USER_FETCHED,
+                data: users
+            };
+        }
+
+        catch (error: any) {
+            this.logger.error(`Inside UserService - fetchUsersByRole method - Error while fetching users by role: ${error}`);
+            throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 
 }
 

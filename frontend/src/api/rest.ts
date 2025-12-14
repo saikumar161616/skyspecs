@@ -13,6 +13,10 @@ export const authApi = {
     return client.get('/user');
   },
 
+  getUsersByRole: (role: string) => {
+    return client.get(`/user/role/${role}`);
+  },
+
   updateUser: (id: string, data: any) => {
     return client.patch(`/user/${id}`, data);
   }
@@ -31,12 +35,10 @@ export const turbineApi = {
 
 // --- Inspections ---
 export const inspectionApi = {
-  getAll: (filters?: { turbineId?: string; date?: string; dataSource?: string }) => {
-    const params = new URLSearchParams(filters as any).toString();
-    return client.get(`/inspection?${params}`);
-  },
-  getById: (id: string) => client.get(`/inspection/${id}`), // Note: Verify backend has this specific GET route
+  getAll: (filters?: { turbineId?: string; date?: string; dataSource?: string }) => { const params = new URLSearchParams(filters as any).toString(); return client.get(`/inspection?${params}`); },
+  getById: (id: string) => client.get(`/inspection/${id}`), 
   create: (data: any) => client.post('/inspection', data),
+  update: (id: string, data: any) => client.patch(`/inspection/${id}`, data),
 };
 
 // --- Findings ---
