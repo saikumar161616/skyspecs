@@ -1,0 +1,53 @@
+import client from './client';
+
+
+// --- Auth ---
+export const authApi = {
+  login: (credentials: { email: string; password: string }) => 
+    client.post('/user/login', credentials),
+  
+  register: (userData: any) => 
+    client.post('/user', userData),
+
+  getAllUsers: () => {
+    return client.get('/user');
+  },
+
+  updateUser: (id: string, data: any) => {
+    return client.patch(`/user/${id}`, data);
+  }
+
+};
+
+
+
+
+// --- Turbines ---
+export const turbineApi = {
+  getAll: () => client.get('/turbine'),
+  create: (data: { name: string; manufacturer?: string; mwRating?: number; lat?: number; lng?: number }) => client.post('/turbine', data),
+  update: (id: string, data: any) => client.patch(`/turbine/${id}`, data),
+};
+
+// --- Inspections ---
+export const inspectionApi = {
+  getAll: (filters?: { turbineId?: string; date?: string; dataSource?: string }) => {
+    const params = new URLSearchParams(filters as any).toString();
+    return client.get(`/inspection?${params}`);
+  },
+  getById: (id: string) => client.get(`/inspection/${id}`), // Note: Verify backend has this specific GET route
+  create: (data: any) => client.post('/inspection', data),
+};
+
+// --- Findings ---
+export const findingApi = {
+  create: (data: any) => client.post('/finding', data),
+  update: (id: string, data: any) => client.put(`/finding/${id}`, data),
+  getAll: () => client.get('/finding'), // Usually filtered by inspectionId in real apps
+};
+
+// --- Repair Plans ---
+export const repairPlanApi = {
+  getByInspectionId: (inspectionId: string) =>  client.get(`/repair-plan?inspectionId=${inspectionId}`),
+  create: (data: { inspectionId: string }) =>  client.post('/repair-plan', data),
+};

@@ -1,7 +1,7 @@
 import { Default } from "../../config/default";
 import { CustomError } from "../../error-handlers/custom.error";
 import HTTP_STATUS from "../../constants/http.constants";
-import { STATUS } from "../../constants/feild.constants";
+import { ROLE, STATUS } from "../../constants/feild.constants";
 import TURBINE_MSG_CONSTANTS from "./turbine.constant";
 import { prisma } from "../../config/prisma";
 import { helperUtil } from "../../utilities/helper.utils";
@@ -21,18 +21,22 @@ class TurbineService extends Default {
         try {
             this.logger.info('Inside TurbineService - createTurbine method');
 
-            await prisma.turbine.create({
-                data: {
-                    name: turbineData.name,
-                    manufacturer: turbineData.manufacturer,
-                    status: turbineData.status,
-                    mwRating: turbineData.mwRating,
-                    lat: turbineData.lat,
-                    lng: turbineData.lng,
-                    createdBy: reqUser.id
-                }
-            });
-            
+            if (reqUser.role == ROLE.ADMIN) {
+                await prisma.turbine.create({
+                    data: {
+                        name: turbineData.name,
+                        manufacturer: turbineData.manufacturer,
+                        status: turbineData.status,
+                        mwRating: turbineData.mwRating,
+                        lat: turbineData.lat,
+                        lng: turbineData.lng,
+                        createdBy: reqUser.id
+                    }
+                });
+            }
+
+            else throw new CustomError('Your not authorized to create turbine', HTTP_STATUS.FORBIDDEN);
+
             return {
                 message: TURBINE_MSG_CONSTANTS.TURBINE_CREATE,
                 data: turbineData
@@ -67,7 +71,7 @@ class TurbineService extends Default {
                     updatedBy: reqUser.id,
                     updatedAt: new Date()
                 }
-            }); 
+            });
 
 
             return {
@@ -91,19 +95,19 @@ class TurbineService extends Default {
         try {
             this.logger.info('Inside TurbineService - fetchTurbines method');
 
-            const turbines = await prisma.turbine.findMany({where: { status: { equals: STATUS.ACTIVE } }});
-            
+            const turbines = await prisma.turbine.findMany({ where: { status: { equals: STATUS.ACTIVE } } });
+
             return {
                 message: TURBINE_MSG_CONSTANTS.TURBINE_FETCHED,
                 data: turbines
             };
         }
-        catch (error: any) {    
+        catch (error: any) {
             this.logger.error(`Inside TurbineService - fetchTurbines method - Error while fetching turbines: ${error}`);
             throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
         }
     }
-     
+
 
 
 }

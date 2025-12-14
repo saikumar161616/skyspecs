@@ -118,7 +118,39 @@ class UserController extends Default {
 
 
 
-   
+    /**
+     * @method UserController:getAllUsersController
+     * @description Controller to handle fetching all users.
+     * @param req 
+     * @param res 
+     * @returns 
+    **/
+    async getAllUsersController(req: any, res: any) {
+        try {
+            this.logger.info('Inside UserController - getAllUsersController method');
+            const response = await userService.fetchUsers(req.user);
+            if (!response) throw new CustomError('Failed to fetch users', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+
+            return res.status(HTTP_STATUS.OK).json({
+                status: true,
+                message: response.message,
+                data: response.data
+            });
+        }
+        catch (error: any) {
+            this.logger.error(`Inside UserController - getAllUsersController method - Error while fetching users: ${error}`);
+            if (error instanceof CustomError) {
+                return res.status(error.statusCode).json({
+                    message: error.message || error,
+                    status: false
+                });
+            }
+            return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                status: false,
+                message: error
+            });
+        }       
+    }
 
 };
 

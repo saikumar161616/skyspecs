@@ -14,6 +14,7 @@ export const updateUserSchemaValidator = joi.object({
     email: joi.string().email(),
     passwordHash: joi.string().min(6),
     status : joi.string().valid(...Object.values(STATUS)),
+    role : joi.string().valid(...Object.values(ROLE)),
 });
 
 export const loginUserSchemaValidator = joi.object({

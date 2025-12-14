@@ -1,7 +1,7 @@
 import { Default } from "../../config/default";
 import { CustomError } from "../../error-handlers/custom.error";
 import HTTP_STATUS from "../../constants/http.constants";
-import { STATUS } from "../../constants/feild.constants";
+import { ROLE, STATUS } from "../../constants/feild.constants";
 import USER_MSG_CONSTANTS from "./user.constant";
 import { prisma } from "../../config/prisma";
 import { helperUtil } from "../../utilities/helper.utils";
@@ -122,6 +122,30 @@ class UserService extends Default {
         }
     }
 
+
+    /**
+     * @method UserService:fetchUsers
+     * @description Service to fetch all users.
+     * @returns 
+    **/
+    async fetchUsers(reqUser: any) {
+        try {
+            this.logger.info('Inside UserService - fetchUsers method');
+
+            if (reqUser.role === ROLE.ENGINEER) throw new CustomError('You dont have access', HTTP_STATUS.FORBIDDEN);
+
+            const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, status: true } });
+            
+            return {
+                message: USER_MSG_CONSTANTS.USER_FETCHED,
+                data: users
+            };
+        } catch (error: any) {
+            this.logger.error(`Inside UserService - fetchUsers method - Error while fetching users: ${error}`);
+            throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
+        }
+    }    
+    
 
 }
 

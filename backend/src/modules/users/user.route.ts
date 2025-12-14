@@ -1,8 +1,8 @@
-import { NextFunction, Request, Response, Router} from 'express';
-import UserMiddleware from './user.middleware'; 
+import { NextFunction, Request, Response, Router } from 'express';
+import UserMiddleware from './user.middleware';
 import UserController from './user.controller';
 
-// import AuthMiddleware from '../../config/authMiddleware';
+import AuthMiddleware from '../../config/authMiddleware';
 
 const router = Router();
 
@@ -28,6 +28,14 @@ router.patch('/:id',
 router.post('/login',
     (req: Request, res: Response, next: NextFunction) => UserMiddleware.prepareLoginUser(req, res, next),
     (req: Request, res: Response) => UserController.loginUserController(req, res)
+);
+
+
+// Get all users
+router.get('/',
+    (req: Request, res: Response, next: NextFunction) => AuthMiddleware.verifyToken(req, res, next),
+
+    (req: Request, res: Response) => UserController.getAllUsersController(req, res)
 );
 
 
