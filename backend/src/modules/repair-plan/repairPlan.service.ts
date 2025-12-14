@@ -4,6 +4,7 @@ import HTTP_STATUS from '../../constants/http.constants';
 import REPAIR_PLAN_MSG_CONSTANTS from './repairPlan.constant';
 import { prisma } from '../../config/prisma';
 import { ROLE, PRIORITY } from '../../constants/feild.constants';
+import socketMessage from '../../config/socket';
 
 class RepairPlanService extends Default {
     constructor() {
@@ -118,6 +119,13 @@ class RepairPlanService extends Default {
                     totalEstimatedCost,
                     snapshotJson: findings
                 }
+            });
+
+
+            await socketMessage.sendMessage({
+                type: 'REPAIR_PLAN_GENERATED',
+                inspectionId: inspectionId,
+                data: repairPlan
             });
 
             return {

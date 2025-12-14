@@ -298,6 +298,7 @@ import { inspectionApi, repairPlanApi, findingApi } from '../api/rest';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/authContext';
 import AddFindingModal from '../components/addFindingModal';
+import socketService from '../services/socketService';
 
 // --- Types ---
 interface Finding {
@@ -352,7 +353,33 @@ const InspectionDetails: React.FC = () => {
     const [showAddFinding, setShowAddFinding] = useState(false);
 
 
-    // ... (useEffect and loadData remain the same)
+    useEffect(() => {
+        const handleSocketUpdate = (payload: any) => {
+            // 1. Check if the event type is correct
+            // 2. Check if the event matches the CURRENT Inspection ID (so we don't update wrong pages)
+            if (payload.type === 'REPAIR_PLAN_GENERATED' && payload.inspectionId === id) {
+                
+                toast.info('⚡ Repair Plan Generated Successfully!');
+                
+                // Option A: Update State Directly (Faster)
+                setRepairPlan(payload.data);
+                
+                // Option B: Reload all data (Safest if you need fresh relations)
+                // loadData(); 
+            }
+        };
+
+        // Register Listener
+        socketService.onNotification(handleSocketUpdate);
+
+        // Cleanup Listener on Unmount
+        return () => {
+            socketService.offNotification();
+        };
+    }, [id]); // Re-subscribe if ID changes
+
+
+    // useEffect and loadData remain the same
     useEffect(() => {
         if (id) {
             loadData();
@@ -398,16 +425,16 @@ const InspectionDetails: React.FC = () => {
         if (!id) return;
         try {
             await repairPlanApi.generateRepairPlan(id);
-            toast.success('Repair Plan generated successfully!');
-            loadData();
+            // toast.success('Repair Plan generated successfully!');
+            // loadData();
             setActiveTab('repair-plan');
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Failed to generate repair plan');
         }
     };
 
-    // NEW: Handle Generate Report
-    const handleGenerateReport = async () => {
+    // NEW: Handle Download Report
+    const handleDownloadReport = async () => {
         if (!repairPlan) return;
         // In a real app, this would likely call an API to get a PDF URL or trigger a download
         // For now, we'll just show a success message or log it.
@@ -548,12 +575,12 @@ const InspectionDetails: React.FC = () => {
                                     </Badge>
 
                                     <Button size='sm' variant='outline-primary' onClick={handleGeneratePlan}>Re-generate repair plan</Button>
-                                    
+
                                     {/* NEW: Generate Report Button */}
                                     <Button
                                         variant="outline-dark"
                                         size="sm"
-                                        onClick={handleGenerateReport}
+                                        onClick={handleDownloadReport}
                                     >
                                         Download Report
                                     </Button>

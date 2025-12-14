@@ -158,6 +158,7 @@ import bodyparser from 'body-parser'; // the body-parser middleware is used to p
 import cors, { CorsOptions } from 'cors';
 import morgan from 'morgan';
 import http from 'http';
+import socketMessage  from '../../backend/src/config/socket'; // Import our new helper
 
 import helmet from 'helmet';
 
@@ -216,6 +217,10 @@ app.use('/api', routes);
 
 // create http server warapping the express app.
 const server = http.createServer(app);
+
+// Initialize socket.io with the http server
+socketMessage.connect(server);
+
 server.listen(config.SERVER.PORT, async () => {
     console.info('******************************************************************');
     console.info(`**** SERVER RUNNING ON PORT ${config.SERVER.PORT} ****************`);

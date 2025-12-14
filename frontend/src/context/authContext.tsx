@@ -1,5 +1,6 @@
 // import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 // import { jwtDecode } from 'jwt-decode';
+// import socketService from '../services/socketService';
 
 // interface User {
 //   id: string;
@@ -18,9 +19,24 @@
 // const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // export const AuthProvider = ({ children }: { children: ReactNode }) => {
-//   const [user, setUser] = useState<User | null>(null);
+//   // 1. Initialize Token from LocalStorage
 //   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
 
+//   // 2. Initialize User SYNCHRONOUSLY to prevent redirect on refresh
+//   const [user, setUser] = useState<User | null>(() => {
+//     const storedToken = localStorage.getItem('token');
+//     if (storedToken) {
+//       try {
+//         return jwtDecode<User>(storedToken);
+//       } catch (e) {
+//         console.error("Invalid token on startup", e);
+//         return null;
+//       }
+//     }
+//     return null;
+//   });
+
+//   // Keep the useEffect to handle token updates (e.g. login/logout actions)
 //   useEffect(() => {
 //     if (token) {
 //       try {
@@ -29,6 +45,8 @@
 //       } catch (e) {
 //         logout();
 //       }
+//     } else {
+//       setUser(null);
 //     }
 //   }, [token]);
 
@@ -57,9 +75,12 @@
 // };
 
 
-
+////////////////////////////////// 
+// VERSION WITH SOCKET INTEGRATION //
+//////////////////////////////////
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import socketService from '../services/socketService'; // <--- 1. Ensure this import exists
 
 interface User {
   id: string;
@@ -81,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // 1. Initialize Token from LocalStorage
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
 
-  // 2. Initialize User SYNCHRONOUSLY to prevent redirect on refresh
+  // 2. Initialize User SYNCHRONOUSLY
   const [user, setUser] = useState<User | null>(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
@@ -95,7 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return null;
   });
 
-  // Keep the useEffect to handle token updates (e.g. login/logout actions)
+  // 3. Handle Token Updates (Keep this as is)
   useEffect(() => {
     if (token) {
       try {
@@ -109,15 +130,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [token]);
 
+  // ------------------------------------------------------------------
+  // 4. NEW: Handle Socket Connection based on User state
+  // ------------------------------------------------------------------
+  useEffect(() => {
+    if (user) {
+      // User is logged in (or refreshed) -> Connect Socket
+      // socketService.connect checks internally if it's already connected, so this is safe
+      socketService.connect(user.id);
+    } else {
+      // User is logged out (or null) -> Disconnect Socket
+      socketService.disconnect();
+    }
+  }, [user]); 
+  // ------------------------------------------------------------------
+
   const login = (newToken: string) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
+    // No need to call socketService here manually, the useEffect([user]) above handles it
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    // socketService.disconnect() will be called automatically by the useEffect
   };
 
   return (

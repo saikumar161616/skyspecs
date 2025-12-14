@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { NODE_ENV, JWT_SECRET_KEY, PORT, SQL_DATABASE_URL, MONGO_DATABASE_URL, CORS_ORIGINS } = process.env;
+const { NODE_ENV, JWT_SECRET_KEY, PORT, SQL_DATABASE_URL, MONGO_DATABASE_URL, CORS_ORIGINS, CLIENT_URL } = process.env;
 
 assert(NODE_ENV, 'NODE_ENV is required');
 assert(JWT_SECRET_KEY, 'JWT_SECRET_KEY is required');
@@ -24,5 +24,6 @@ export default {
         SQL_DATABASE_URL,
         MONGO_DATABASE_URL,
         CORS_ORIGINS: corsOrigins,
+        CLIENT_URL: CLIENT_URL,
     }
 };
