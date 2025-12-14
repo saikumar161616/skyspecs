@@ -11,8 +11,28 @@ const Login: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    // Email Regex (Simple version compatible with Joi's logic)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return "Please enter a valid email address.";
+    }
+    if (password.length < 6) {
+        return "Password must be at least 6 characters long.";
+    }
+    return null;
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
+    const validationError = validateForm();
+    if (validationError) {
+        setError(validationError);
+        return;
+    }
     try {
       // Adjusted endpoint based on UserRoute: router.post('/login', ...)
       const res = await authApi.login({ email, password });

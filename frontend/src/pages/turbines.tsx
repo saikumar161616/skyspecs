@@ -48,7 +48,7 @@
 //     setNewTurbine(turbine);
 //     setShowModal(true);
 //   }
-    
+
 
 //   return (
 //     <div>
@@ -129,7 +129,7 @@
 
 
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form } from 'react-bootstrap';
+import { Table, Button, Modal, Form, Alert } from 'react-bootstrap';
 import { turbineApi } from '../api/rest';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/authContext';
@@ -148,17 +148,18 @@ const Turbines: React.FC = () => {
   const [turbines, setTurbines] = useState<Turbine[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+  const [formError, setFormError] = useState('');
+
   // Initial state for the form
-  const [newTurbine, setNewTurbine] = useState<Turbine>({ 
-    name: '', 
-    manufacturer: '', 
-    mwRating: 0, 
-    lat: 0, 
-    lng: 0, 
-    status: '' 
+  const [newTurbine, setNewTurbine] = useState<Turbine>({
+    name: '',
+    manufacturer: '',
+    mwRating: 0,
+    lat: 0,
+    lng: 0,
+    status: ''
   });
-  
+
   const { user } = useAuth();
 
   const fetchTurbines = async () => {
@@ -170,6 +171,28 @@ const Turbines: React.FC = () => {
     }
   };
 
+  const validateForm = () => {
+    if (newTurbine.name.length < 3) {
+      return "Name must be at least 3 characters long.";
+    }
+    if (!newTurbine.manufacturer) {
+      return "Manufacturer is required.";
+    }
+    if (newTurbine.mwRating <= 0) {
+      return "MW Rating must be a positive number.";
+    }
+    if (newTurbine.lat < -90 || newTurbine.lat > 90) {
+      return "Latitude must be between -90 and 90.";
+    }
+    if (newTurbine.lng < -180 || newTurbine.lng > 180) {
+      return "Longitude must be between -180 and 180.";
+    }
+    if (!newTurbine.status) {
+      return "Status is required.";
+    }
+    return null;
+  };
+
   useEffect(() => {
     fetchTurbines();
   }, []);
@@ -178,6 +201,7 @@ const Turbines: React.FC = () => {
     setShowModal(false);
     setEditingId(null);
     setNewTurbine({ name: '', manufacturer: '', mwRating: 0, lat: 0, lng: 0, status: '' });
+    setFormError('');
   };
 
   const handleEdit = (turbine: Turbine) => {
@@ -191,9 +215,15 @@ const Turbines: React.FC = () => {
       status: turbine.status || 'ACTIVE'
     });
     setShowModal(true);
+    setFormError('');
   };
 
   const handleSave = async () => {
+    const error = validateForm();
+    if (error) {
+      setFormError(error);
+      return;
+    }
     try {
       if (editingId) {
         // Update existing turbine
@@ -207,7 +237,9 @@ const Turbines: React.FC = () => {
       handleClose();
       fetchTurbines();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || `Failed to ${editingId ? 'update' : 'create'} turbine`);
+      const msg = error.response?.data?.message || `Failed to ${editingId ? 'update' : 'create'} turbine`;
+      setFormError(msg);
+      toast.error(msg);
     }
   };
 
@@ -260,27 +292,28 @@ const Turbines: React.FC = () => {
           <Modal.Title>{editingId ? 'Edit Turbine' : 'Add Turbine'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+        {formError && <Alert variant="danger">{formError}</Alert>}
           <Form>
             <Form.Group className="mb-2">
               <Form.Label>Name</Form.Label>
-              <Form.Control 
+              <Form.Control
                 value={newTurbine.name}
-                onChange={e => setNewTurbine({ ...newTurbine, name: e.target.value })} 
+                onChange={e => setNewTurbine({ ...newTurbine, name: e.target.value })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Manufacturer</Form.Label>
-              <Form.Control 
+              <Form.Control
                 value={newTurbine.manufacturer}
-                onChange={e => setNewTurbine({ ...newTurbine, manufacturer: e.target.value })} 
+                onChange={e => setNewTurbine({ ...newTurbine, manufacturer: e.target.value })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>MW Rating</Form.Label>
-              <Form.Control 
-                type="number" 
+              <Form.Control
+                type="number"
                 value={newTurbine.mwRating}
-                onChange={e => setNewTurbine({ ...newTurbine, mwRating: parseFloat(e.target.value) })} 
+                onChange={e => setNewTurbine({ ...newTurbine, mwRating: parseFloat(e.target.value) })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
@@ -297,18 +330,18 @@ const Turbines: React.FC = () => {
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Latitude</Form.Label>
-              <Form.Control 
-                type="number" 
+              <Form.Control
+                type="number"
                 value={newTurbine.lat}
-                onChange={e => setNewTurbine({ ...newTurbine, lat: parseFloat(e.target.value) })} 
+                onChange={e => setNewTurbine({ ...newTurbine, lat: parseFloat(e.target.value) })}
               />
             </Form.Group>
             <Form.Group className="mb-2">
               <Form.Label>Longitude</Form.Label>
-              <Form.Control 
-                type="number" 
+              <Form.Control
+                type="number"
                 value={newTurbine.lng}
-                onChange={e => setNewTurbine({ ...newTurbine, lng: parseFloat(e.target.value) })} 
+                onChange={e => setNewTurbine({ ...newTurbine, lng: parseFloat(e.target.value) })}
               />
             </Form.Group>
           </Form>

@@ -13,7 +13,7 @@ interface AddFindingModalProps {
 const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, inspectionId, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    
+
     const [formData, setFormData] = useState({
         category: 'BLADE_DAMAGE',
         severity: 1,
@@ -21,26 +21,47 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
         notes: ''
     });
 
+
+    const validateForm = () => {
+        const severity = Number(formData.severity);
+        const cost = Number(formData.estimatedCost);
+
+        if (!Number.isInteger(severity) || severity < 1 || severity > 10) {
+            return "Severity must be an integer between 1 and 10.";
+        }
+        if (cost <= 0) {
+            return "Estimated cost must be a positive number.";
+        }
+        return null;
+    };
+
     // Reset form when modal opens/closes if needed, or just keep state
-    // For simplicity, we keep state but you might want a useEffect to reset on 'show' change.
+    // For simplicity, we keep state but you might want a useEffect to reset on 'show' change
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            setLoading(false);
+            return;
+        }
+
         try {
             // Construct payload based on Prisma schema & Validation
             const payload = {
                 ...formData,
-                inspectionId, 
+                inspectionId,
                 severity: Number(formData.severity),
                 estimatedCost: Number(formData.estimatedCost)
             };
 
             await findingApi.create(payload, inspectionId);
             toast.success('Finding added successfully');
-            
+
             // Reset form for next use
             setFormData({
                 category: 'BLADE_DAMAGE',
@@ -48,7 +69,7 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
                 estimatedCost: 0,
                 notes: ''
             });
-            
+
             onSuccess(); // Refresh parent data
             handleClose();
         } catch (err: any) {
@@ -71,7 +92,7 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
                     {/* Category Enum */}
                     <Form.Group className="mb-3">
                         <Form.Label>Category</Form.Label>
-                        <Form.Select 
+                        <Form.Select
                             value={formData.category}
                             onChange={e => setFormData({ ...formData, category: e.target.value })}
                         >
@@ -85,10 +106,10 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
                     {/* Severity Int validation allows max 10 */}
                     <Form.Group className="mb-3">
                         <Form.Label>Severity (1-10)</Form.Label>
-                        <Form.Control 
-                            type="number" 
-                            min="1" 
-                            max="10" 
+                        <Form.Control
+                            type="number"
+                            min="1"
+                            max="10"
                             required
                             value={formData.severity}
                             onChange={e => setFormData({ ...formData, severity: parseInt(e.target.value) || 0 })}
@@ -101,9 +122,9 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
                     {/* Estimated Cost Float */}
                     <Form.Group className="mb-3">
                         <Form.Label>Estimated Repair Cost ($)</Form.Label>
-                        <Form.Control 
-                            type="number" 
-                            min="0" 
+                        <Form.Control
+                            type="number"
+                            min="0"
                             step="0.01"
                             required
                             value={formData.estimatedCost}
@@ -114,9 +135,9 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
                     {/* Notes String */}
                     <Form.Group className="mb-3">
                         <Form.Label>Notes</Form.Label>
-                        <Form.Control 
-                            as="textarea" 
-                            rows={3} 
+                        <Form.Control
+                            as="textarea"
+                            rows={3}
                             placeholder="Describe the issue..."
                             value={formData.notes}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}

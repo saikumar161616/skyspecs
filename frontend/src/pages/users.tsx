@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form } from 'react-bootstrap';
+import { Table, Button, Modal, Form , Alert} from 'react-bootstrap';
 import { authApi } from '../api/rest';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/authContext';
@@ -19,6 +19,7 @@ const Users: React.FC = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [newUser, setNewUser] = useState<User>({ name: '', email: '', role: '', passwordHash: '' });
     const { user: currentUser } = useAuth();
+    const [formError, setFormError] = useState('');
 
     const fetchUsers = async () => {
         try {
@@ -36,6 +37,7 @@ const Users: React.FC = () => {
     const handleEdit = (user: User) => {
         setEditingId(user.id || null);
         setNewUser({ name: user.name, email: user.email, role: user.role });
+        setFormError('');
         setShowModal(true);
     };
 
@@ -43,9 +45,39 @@ const Users: React.FC = () => {
         setShowModal(false);
         setEditingId(null);
         setNewUser({ name: '', email: '', role: '', passwordHash: '' });
+        setFormError('');
+    };
+
+
+    const validateForm = () => {
+        if (!newUser.name || newUser.name.length < 3) {
+            return "Name must be at least 3 characters long.";
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!newUser.email || !emailRegex.test(newUser.email)) {
+            return "Please enter a valid email address.";
+        }
+
+        if (!newUser.role) {
+            return "Please select a role.";
+        }
+
+        // Only validate password for new users
+        if (!editingId) {
+            if (!newUser.passwordHash || newUser.passwordHash.length < 6) {
+                return "Password must be at least 6 characters long.";
+            }
+        }
+        return null;
     };
 
     const handleSave = async () => {
+        const error = validateForm();
+        if (error) {
+            setFormError(error);
+            return;
+        }
         try {
             if (editingId) {
                 // Update logic
@@ -63,6 +95,7 @@ const Users: React.FC = () => {
             fetchUsers();
         } catch (error: any) {
             toast.error(error.response?.data?.message || `Failed to ${editingId ? 'update' : 'create'} user`);
+            setFormError('');
         }
     };
 
@@ -113,6 +146,7 @@ const Users: React.FC = () => {
                     <Modal.Title>{editingId ? 'Edit User' : 'Add User'}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+                {formError && <Alert variant="danger">{formError}</Alert>}
                     <Form>
                         <Form.Group className="mb-2">
                             <Form.Label>Name</Form.Label>

@@ -247,10 +247,33 @@ const InspectionForm: React.FC = () => {
         }
     };
 
+    const validateForm = () => {
+        if (!formData.turbineId) return "Please select a turbine.";
+        if (!formData.inspectorId) return "Please select an inspector.";
+        if (!formData.date) return "Date is required.";
+        
+        // Simple URL validation if rawPackageUrl is provided
+        if (formData.rawPackageUrl) {
+            try {
+                new URL(formData.rawPackageUrl);
+            } catch (_) {
+                return "Raw Package URL must be a valid URI (e.g., https://example.com).";
+            }
+        }
+        return null;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            setLoading(false);
+            return;
+        }
 
         try {
             if (id) {
