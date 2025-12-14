@@ -293,7 +293,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Row, Col, Table, Badge, Container, Spinner, Tab, Tabs, Alert } from 'react-bootstrap';
+import { Card, Button, Row, Col, Table, Badge, Container, Spinner, Tab, Tabs, Alert, Form } from 'react-bootstrap';
 import { inspectionApi, repairPlanApi, findingApi } from '../api/rest';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/authContext';
@@ -353,17 +353,21 @@ const InspectionDetails: React.FC = () => {
     const [showAddFinding, setShowAddFinding] = useState(false);
 
 
+    // NEW: State for search term
+    const [searchTerm, setSearchTerm] = useState('');
+
+
     useEffect(() => {
         const handleSocketUpdate = (payload: any) => {
             // 1. Check if the event type is correct
             // 2. Check if the event matches the CURRENT Inspection ID (so we don't update wrong pages)
             if (payload.type === 'REPAIR_PLAN_GENERATED' && payload.inspectionId === id) {
-                
+
                 toast.info('⚡ Repair Plan Generated Successfully!');
-                
+
                 // Option A: Update State Directly (Faster)
                 setRepairPlan(payload.data);
-                
+
                 // Option B: Reload all data (Safest if you need fresh relations)
                 // loadData(); 
             }
@@ -449,6 +453,15 @@ const InspectionDetails: React.FC = () => {
     };
 
 
+    const handleSearchFindings = async (term: string) => {
+        //if (term.trim() !== '') {
+            const inspRes = await findingApi.getFindingsById(id, term);
+            setFinding(inspRes.data.data);
+            setSearchTerm(term);
+        //}
+    }
+
+
     if (loading) {
         // ... (loading spinner)
         return (
@@ -511,7 +524,18 @@ const InspectionDetails: React.FC = () => {
                 <Tab eventKey="findings" title={`Findings (${finding?.length || 0})`}>
                     <Card>
                         <Card.Header className="d-flex justify-content-between align-items-center bg-white">
-                            <h5 className="mb-0">Detected Issues</h5>
+                            <div className="d-flex align-items-center gap-3">
+                                <h5 className="mb-0">Detected Issues</h5>
+                                {/* NEW: Search Input */}
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Search by notes..."
+                                    size="sm"
+                                    style={{ width: '250px' }}
+                                    value={searchTerm}
+                                    onChange={(e) => handleSearchFindings(e.target.value)}
+                                />
+                            </div>
                             {user?.role !== 'VIEWER' && (
                                 <Button size="sm" variant="outline-success"
                                     onClick={() => setShowAddFinding(true)}

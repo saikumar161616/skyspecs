@@ -32,7 +32,6 @@ class AuthMiddleware extends Default {
                     this.logger.error(`Inside AuthMiddleware - verifyToken method - Token verification failed: ${err}`);
                     return res.status(HTTP_STATUS.FORBIDDEN).json({ message: 'Invalid token' });
                 }
-                console.log('Verified user:', user);
                 req.user = user;
                 next();
             });

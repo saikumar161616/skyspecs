@@ -69,11 +69,26 @@ class FindingService extends Default {
         }
     }
 
-    async fetchFindingsByInspectionId(inspectionId: string) {
+    async fetchFindingsByInspectionId(inspectionId: string, searchTerm?: any) {
         try {
             this.logger.info('Inside FindingService - fetchFindings method');
 
-            const findings = await prisma.finding.findMany({where: { inspectionId }, include : { creator: { select: { id: true, name: true, email: true } } }});
+            // Construct dynamic where clause
+            const whereClause: any = { 
+                inspectionId 
+            };
+
+            // If search term exists, filter by notes
+            if (searchTerm) {
+                whereClause.notes = {
+                    contains: searchTerm,
+                    mode: 'insensitive', // Makes search case-insensitive (e.g. 'Crack' matches 'crack')
+                };
+            }
+
+            console.log('Where Clause:', whereClause);
+
+            const findings = await prisma.finding.findMany({where:  whereClause , include : { creator: { select: { id: true, name: true, email: true } } }});
 
             return {
                 message: FINDING_MSG_CONSTANTS.FINDING_FETCHED,

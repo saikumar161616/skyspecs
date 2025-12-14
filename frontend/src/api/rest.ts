@@ -3,10 +3,10 @@ import client from './client';
 
 // --- Auth ---
 export const authApi = {
-  login: (credentials: { email: string; password: string }) => 
+  login: (credentials: { email: string; password: string }) =>
     client.post('/user/login', credentials),
-  
-  register: (userData: any) => 
+
+  register: (userData: any) =>
     client.post('/user', userData),
 
   getAllUsers: () => {
@@ -36,7 +36,7 @@ export const turbineApi = {
 // --- Inspections ---
 export const inspectionApi = {
   getAll: (filters?: { turbineId?: string; date?: string; dataSource?: string }) => { const params = new URLSearchParams(filters as any).toString(); return client.get(`/inspection?${params}`); },
-  getById: (id: string) => client.get(`/inspection/${id}`), 
+  getById: (id: string) => client.get(`/inspection/${id}`),
   create: (data: any) => client.post('/inspection', data),
   update: (id: string, data: any) => client.patch(`/inspection/${id}`, data),
 };
@@ -45,12 +45,12 @@ export const inspectionApi = {
 export const findingApi = {
   create: (data: any, inspectionId: any) => client.post(`/finding/${inspectionId}`, data),
   update: (id: string, data: any) => client.put(`/finding/${id}`, data),
-  getFindingsById: (inspectionId: any) => client.get(`/finding/${inspectionId}`), // Usually filtered by inspectionId in real apps
+  getFindingsById: (inspectionId: any, search: any = null) => client.get(`/finding/${inspectionId}?search=${search}`), // Usually filtered by inspectionId in real apps
 };
 
 // --- Repair Plans ---
 export const repairPlanApi = {
-  getByInspectionId: (inspectionId: string) =>  client.get(`/repair-plan/${inspectionId}?fetch=${true}`),
-  create: (data: { inspectionId: string }) =>  client.post('/repair-plan', data),
-  generateRepairPlan: (inspectionId: string) =>  client.get(`/repair-plan/${inspectionId}`),
+  getByInspectionId: (inspectionId: string) => client.get(`/repair-plan/${inspectionId}?fetch=${true}`),
+  create: (data: { inspectionId: string }) => client.post('/repair-plan', data),
+  generateRepairPlan: (inspectionId: string) => client.get(`/repair-plan/${inspectionId}`),
 };
