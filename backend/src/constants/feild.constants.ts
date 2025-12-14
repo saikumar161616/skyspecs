@@ -20,3 +20,10 @@ export const FINDING_CATEGORY = {
     EROSION   : 'EROSION',
     UNKNOWN : 'UNKNOWN',
 }
+
+
+export const PRIORITY = {
+    LOW: 'LOW',
+    MEDIUM: 'MEDIUM',
+    HIGH: 'HIGH',
+};
