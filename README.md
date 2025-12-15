@@ -75,6 +75,10 @@ Purpose: Stores high-volume, unstructured Ingestion Logs and telemetry data.
 
 Reasoning: Inspection logs can vary in format and volume. A NoSQL document store offers the flexibility to write these logs rapidly without adhering to a rigid schema, preventing the primary transactional database (Postgres) from being bogged down by logging writes.
 
+
+# 4 PDF Generarion of repair plan
+Generated the pdf of the repair plan of its all findings and related data
+
 # 4. Real-time Updates
 Technology: Socket.io
 

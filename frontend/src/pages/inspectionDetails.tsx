@@ -299,6 +299,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../context/authContext';
 import AddFindingModal from '../components/addFindingModal';
 import socketService from '../services/socketService';
+import jsPDF from "jspdf";
 
 // --- Types ---
 interface Finding {
@@ -470,14 +471,81 @@ const InspectionDetails: React.FC = () => {
 
     // NEW: Handle Download Report
     const handleDownloadReport = async () => {
-        if (!repairPlan) return;
+        if (!repairPlan || !inspection) return;
         // In a real app, this would likely call an API to get a PDF URL or trigger a download
         // For now, we'll just show a success message or log it.
         try {
-            // Example: await repairPlanApi.generateReport(repairPlan.id);
-            toast.info("Report generation started...");
-            // You might want to redirect to a download link if the API returns one
-            // window.open(reportUrl, '_blank');
+            toast.info("Report is downloading");
+
+            const doc = new jsPDF();
+            let yPos = 20; // Starting Y position cursor
+
+            // --- Header ---
+            doc.setFontSize(22);
+            doc.text("Repair Plan Report", 10, yPos);
+            yPos += 15;
+
+            // --- Turbine Details ---
+            doc.setFontSize(12);
+            doc.text(`Turbine: ${inspection.turbine.name}`, 10, yPos);
+            yPos += 7;
+            doc.text(`Manufacturer: ${inspection.turbine.manufacturer}`, 10, yPos);
+            yPos += 7;
+            doc.text(`Location: ${inspection.turbine.lat}, ${inspection.turbine.lng}`, 10, yPos);
+            yPos += 7;
+            doc.text(`Inspection Date: ${new Date(inspection.date).toLocaleDateString()}`, 10, yPos);
+            yPos += 15;
+
+            // --- Plan Summary ---
+            doc.setFontSize(16);
+            doc.text("Plan Overview", 10, yPos);
+            yPos += 10;
+
+            doc.setFontSize(12);
+            yPos += 7;
+            doc.text(`Priority: ${repairPlan.priority}`, 10, yPos);
+            yPos += 7;
+            doc.text(`Total Estimated Cost: $${(repairPlan.totalEstimatedCost || 0).toLocaleString()}`, 10, yPos);
+            yPos += 7;
+            doc.text(`Generated On: ${new Date(repairPlan.createdAt).toLocaleString()}`, 10, yPos);
+            yPos += 15;
+
+            // --- Findings Breakdown ---
+            doc.setFontSize(16);
+            doc.text("Findings Breakdown", 10, yPos);
+            yPos += 10;
+
+            doc.setFontSize(10);
+
+            // Loop through findings
+            finding.forEach((f, index) => {
+                // Check if we need a new page (approx page height is ~297mm)
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                // Line 1: Category and Metrics
+                const titleLine = `${index + 1}. [${f.category}] Severity: ${f.severity}/5 | Cost: $${(f.estimatedCost || 0).toLocaleString()}`;
+                doc.setFont("helvetica", "bold");
+                doc.text(titleLine, 10, yPos);
+                yPos += 5;
+
+                // Line 2: Notes
+                doc.setFont("helvetica", "normal");
+                // splitTextToSize handles wrapping long text automatically
+                const notesLines = doc.splitTextToSize(`Notes: ${f.notes}`, 180);
+                doc.text(notesLines, 15, yPos);
+
+                // Update yPos based on how many lines the notes took
+                yPos += (notesLines.length * 5) + 5;
+            });
+
+            // --- Footer / Save ---
+            doc.save(`RepairPlan-${inspection.turbine.name}-${repairPlan.id}.pdf`);
+            toast.success("Report downloaded successfully");
+
+
         } catch (error) {
             toast.error("Failed to generate report.");
         }
@@ -588,54 +656,54 @@ const InspectionDetails: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {finding && finding.length > 0 ? 
-                                    
-                                    (
-                                        finding.map((f: Finding) => {
-                                            
-                                            // 4. PERMISSION LOGIC
-                                            const isCreator = user?.id === f.creator?.id;
-                                            const isAdmin = user?.role === 'ADMIN';
-                                            const canEdit = isAdmin || (user?.role === 'ENGINEER' && isCreator);
+                                    {finding && finding.length > 0 ?
 
-                                            return (
-                                                <tr key={f.id}>
-                                                    <td>{f.category}</td>
-                                                    <td>
-                                                        <Badge bg={
-                                                            f.severity >= 4 ? 'danger' :
-                                                                f.severity === 3 ? 'warning' : 'success'
-                                                        }>
-                                                            {f.severity}
-                                                        </Badge>
-                                                    </td>
-                                                    <td>${(f.estimatedCost || 0).toLocaleString()}</td>
-                                                    <td>{f.notes}</td>
-                                                    <td>{f.creator?.name || 'Unknown'}</td>
-                                                    <td>
-                                                        {/* 5. RENDER EDIT BUTTON CONDITIONALLY */}
-                                                        {canEdit && (
-                                                            <Button 
-                                                                size="sm" 
-                                                                variant="link" 
-                                                                className="text-decoration-none p-0"
-                                                                onClick={() => handleOpenEdit(f)}
-                                                            >
-                                                                Edit
-                                                            </Button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                    )
-                                    : (
-                                    <tr>
-                                        <td colSpan={4} className="text-center py-4 text-muted">
-                                            No findings recorded for this inspection yet.
-                                        </td>
-                                    </tr>
-                                    )}
+                                        (
+                                            finding.map((f: Finding) => {
+
+                                                // 4. PERMISSION LOGIC
+                                                const isCreator = user?.id === f.creator?.id;
+                                                const isAdmin = user?.role === 'ADMIN';
+                                                const canEdit = isAdmin || (user?.role === 'ENGINEER' && isCreator);
+
+                                                return (
+                                                    <tr key={f.id}>
+                                                        <td>{f.category}</td>
+                                                        <td>
+                                                            <Badge bg={
+                                                                f.severity >= 4 ? 'danger' :
+                                                                    f.severity === 3 ? 'warning' : 'success'
+                                                            }>
+                                                                {f.severity}
+                                                            </Badge>
+                                                        </td>
+                                                        <td>${(f.estimatedCost || 0).toLocaleString()}</td>
+                                                        <td>{f.notes}</td>
+                                                        <td>{f.creator?.name || 'Unknown'}</td>
+                                                        <td>
+                                                            {/* 5. RENDER EDIT BUTTON CONDITIONALLY */}
+                                                            {canEdit && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="link"
+                                                                    className="text-decoration-none p-0"
+                                                                    onClick={() => handleOpenEdit(f)}
+                                                                >
+                                                                    Edit
+                                                                </Button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )
+                                        : (
+                                            <tr>
+                                                <td colSpan={4} className="text-center py-4 text-muted">
+                                                    No findings recorded for this inspection yet.
+                                                </td>
+                                            </tr>
+                                        )}
                                 </tbody>
                             </Table>
                         </Card.Body>
