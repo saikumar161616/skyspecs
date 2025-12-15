@@ -35,7 +35,7 @@ export const turbineApi = {
 
 // --- Inspections ---
 export const inspectionApi = {
-  getAll: (filters?: { turbineId?: string; date?: string; dataSource?: string }) => { const params = new URLSearchParams(filters as any).toString(); return client.get(`/inspection?${params}`); },
+  getAll: (filters?: { turbineId?: string; date?: string; startDate?: string, endDate?:string, dataSource?: string }) => { const params = new URLSearchParams(filters as any).toString(); return client.get(`/inspection?${params}`); },
   getById: (id: string) => client.get(`/inspection/${id}`),
   create: (data: any) => client.post('/inspection', data),
   update: (id: string, data: any) => client.patch(`/inspection/${id}`, data),

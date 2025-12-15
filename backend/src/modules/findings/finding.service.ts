@@ -5,6 +5,7 @@ import FINDING_MSG_CONSTANTS from './finding.constant';
 import { ROLE } from '../../constants/feild.constants';
 import { prisma } from '../../config/prisma';
 import InspectionLog from '../inspectionlogs/inspectionlog.model';
+import { helperUtil } from '../../utilities/helper.utils';
 
 class FindingService extends Default {
     constructor() {
@@ -22,6 +23,8 @@ class FindingService extends Default {
             if (!inspection) throw new CustomError(FINDING_MSG_CONSTANTS.INSPECTION_FINDINGS_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
             if (reqUser && reqUser.role == ROLE.VIEWER) throw new CustomError('Unauthorized to create finding', HTTP_STATUS.UNAUTHORIZED);
 
+            const cracked = await helperUtil.crackRule(findingData);
+            if (cracked) findingData.severity = Math.max(findingData.severity, 4);
 
             const newFinding = await prisma.finding.create({
                 data: {
@@ -74,8 +77,8 @@ class FindingService extends Default {
                 throw new CustomError('Unauthorized to update finding', HTTP_STATUS.FORBIDDEN);
             }
 
-
-            console.log('Update Data:', updateData);
+            const cracked = await helperUtil.crackRule(updateData);
+            if (cracked) updateData.severity = Math.max(updateData.severity, 4);
 
             const updatedFinding = await prisma.finding.update({
                 where: { id: findingId },

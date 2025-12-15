@@ -16,7 +16,7 @@ class HelperUtil {
         const salt = await bcrypt.genSalt(10);
         const hashedData = await bcrypt.hash(data, salt);
         return hashedData;
-    }    
+    }
 
 
     /**
@@ -28,8 +28,14 @@ class HelperUtil {
     **/
     async compareData(data: string, hashedData: string): Promise<boolean> {
         return await bcrypt.compare(data, hashedData);
-    }   
-    
+    }
+
+
+    async crackRule(data: any): Promise<boolean> {
+        if ( data.category === 'BLADE_DAMAGE' && data.notes && data.notes.toLowerCase().includes('crack')) return true;
+        return false;
+    }
+
 
 
 }

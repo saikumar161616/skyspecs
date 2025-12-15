@@ -101,15 +101,24 @@ class InspectionService extends Default {
      * @description Service to fetch inspections.
      * @returns 
     **/
-    async fetchInspections(date?: string, turbineId?: string, dataSource?: string) {
+    async fetchInspections(date?: string, startDate?: any, endDate?: any, turbineId?: string, dataSource?: string) {
         try {
             this.logger.info('Inside InspectionService - fetchInspections method');
 
             let filter: any = {};
-            
+
             if (date) {
                 const inspectionDate = new Date(date);
                 filter.date = inspectionDate;
+            }
+            else if (startDate || endDate) {
+                filter.date = {};
+                if (startDate) {
+                    filter.date.gte = new Date(startDate); // Greater than or equal to start
+                }
+                if (endDate) {
+                    filter.date.lte = new Date(endDate);   // Less than or equal to end
+                }
             }
             if (turbineId) {
                 filter.turbineId = turbineId;

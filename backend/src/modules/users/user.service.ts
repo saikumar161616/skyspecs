@@ -26,7 +26,7 @@ class UserService extends Default {
             if (existingUser) throw new CustomError(USER_MSG_CONSTANTS.USER_ALREADY_EXISTS, HTTP_STATUS.CONFLICT);
 
             // Hash the password before saving
-            const hashedPassword = await helperUtil.hashData(userData.password);
+            const hashedPassword = await helperUtil.hashData(userData.passwordHash);
             userData.passwordHash = hashedPassword;
 
             // Create new user
@@ -40,6 +40,7 @@ class UserService extends Default {
                 data: newUser
             };
         } catch (error: any) {
+            console.log(error);
             this.logger.error(`Inside UserService - createUser method - Error while creating user: ${error}`);
             throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
         }

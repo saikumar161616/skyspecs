@@ -92,7 +92,8 @@ class InspectionController extends Default {
     async fetchInspectionsController(req: any, res: any) {
         try {
             this.logger.info('Inside InspectionController - fetchInspectionsController method');
-            const response = await inspectionService.fetchInspections(req.query.date, req.query.turbineId, req.query.dataSource);
+            const { date, startDate, endDate, turbineId, dataSource } = req.query;
+            const response = await inspectionService.fetchInspections(date,  startDate, endDate, turbineId, dataSource);
             if (!response) throw new CustomError('Failed to fetch inspections', HTTP_STATUS.INTERNAL_SERVER_ERROR);
 
             return res.status(HTTP_STATUS.OK).json({

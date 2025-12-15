@@ -25,12 +25,10 @@ const Inspections: React.FC = () => {
     const { user } = useAuth();
     const [inspections, setInspections] = useState<Inspection[]>([]);
     const [turbines, setTurbines] = useState<Turbine[]>([]);
-    const [filters, setFilters] = useState({ turbineId: '', date: '', dataSource: '' });
-
+    const [filters, setFilters] = useState({ turbineId: '', date: '', dataSource: '', startDate: '', endDate: '' });
 
     // Check if any filter is applied
-    const hasActiveFilters = filters.turbineId !== '' || filters.date !== '' || filters.dataSource !== '';
-
+    const hasActiveFilters = filters.turbineId !== '' || filters.date !== '' || filters.dataSource !== '' || filters.startDate !== '' || filters.endDate !== '';
 
     const fetchTurbines = async () => {
         try {
@@ -74,15 +72,23 @@ const Inspections: React.FC = () => {
             </div>
 
             <Row className="mb-3 bg-light p-3 rounded">
-                <Col md={3}>
+                <Col md={2}>
                     <Form.Control
                         type="date"
-                        placeholder="Filter by Date"
-                        value={filters.date}
-                        onChange={e => setFilters({ ...filters, date: e.target.value })}
+                        placeholder="Filter by start Date"
+                        value={filters.startDate}
+                        onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                     />
                 </Col>
-                <Col md={3}>
+                <Col md={2}>
+                    <Form.Control
+                        type="date"
+                        placeholder="Filter by start date"
+                        value={filters.endDate}
+                        onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                    />
+                </Col>
+                <Col md={2}>
                     <Form.Select
                         value={filters.dataSource}
                         onChange={e => setFilters({ ...filters, dataSource: e.target.value })}>
@@ -91,7 +97,7 @@ const Inspections: React.FC = () => {
                         <option value="MANUAL">Manual</option>
                     </Form.Select>
                 </Col>
-                <Col md={3}>
+                <Col md={2}>
                     <Form.Select
                         value={filters.turbineId}
                         onChange={e => setFilters({ ...filters, turbineId: e.target.value })}
@@ -106,12 +112,11 @@ const Inspections: React.FC = () => {
                 </Col>
 
 
-
                 {hasActiveFilters && (
-                    <Col md={3}>
+                    <Col md={2}>
                         <Button
                             variant="outline-secondary"
-                            onClick={() => setFilters({ turbineId: '', date: '', dataSource: '' })}
+                            onClick={() => setFilters({ turbineId: '', date: '', dataSource: '', startDate: '', endDate: '' })}
                         >
                             Clear Filters
                         </Button>
