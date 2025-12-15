@@ -44,7 +44,7 @@ export const inspectionApi = {
 // --- Findings ---
 export const findingApi = {
   create: (data: any, inspectionId: any) => client.post(`/finding/${inspectionId}`, data),
-  update: (id: string, data: any) => client.put(`/finding/${id}`, data),
+  update: (id: string, data: any) => client.patch(`/finding/${id}`, data),
   getFindingsById: (inspectionId: any, search: any = null) => client.get(`/finding/${inspectionId}?search=${search}`), // Usually filtered by inspectionId in real apps
 };
 
@@ -53,4 +53,9 @@ export const repairPlanApi = {
   getByInspectionId: (inspectionId: string) => client.get(`/repair-plan/${inspectionId}?fetch=${true}`),
   create: (data: { inspectionId: string }) => client.post('/repair-plan', data),
   generateRepairPlan: (inspectionId: string) => client.get(`/repair-plan/${inspectionId}`),
+};
+
+
+export const logApi = {
+  getByInspectionId: (id: string) => client.get(`/inspection-log/${id}`),
 };

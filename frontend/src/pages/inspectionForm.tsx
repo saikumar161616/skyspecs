@@ -195,7 +195,7 @@ const InspectionForm: React.FC = () => {
     const [formData, setFormData] = useState({
         date: new Date().toISOString().split('T')[0], // Default to today
         turbineId: specificTurbineId || '',
-        inspectorId: '', // Added inspectorId
+        inspectorId: '', //Added inspectorId
         dataSource: 'DRONE',
         rawPackageUrl: ''
     });

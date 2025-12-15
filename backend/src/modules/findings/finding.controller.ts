@@ -33,10 +33,10 @@ class FindingController extends Default {
         }
     }
 
-    async updateFindingController(req: Request, res: Response) {
+    async updateFindingController(req: any, res: any) {
         try {
             this.logger.info('Inside FindingController - updateFindingController method');
-            const response = await findingService.updateFinding(req.params.id, req.body);
+            const response = await findingService.updateFinding(req.params.id, req.body, req.user);
             return res.status(HTTP_STATUS.OK).json({
                 status: true,
                 message: response.message,

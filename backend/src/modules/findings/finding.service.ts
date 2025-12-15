@@ -4,6 +4,7 @@ import HTTP_STATUS from '../../constants/http.constants';
 import FINDING_MSG_CONSTANTS from './finding.constant';
 import { ROLE } from '../../constants/feild.constants';
 import { prisma } from '../../config/prisma';
+import InspectionLog from '../inspectionlogs/inspectionlog.model';
 
 class FindingService extends Default {
     constructor() {
@@ -31,6 +32,24 @@ class FindingService extends Default {
                 },
             });
 
+            // We don't await this because we don't want to block the main response if logging fails
+            (async () => {
+                try {
+                    await InspectionLog.create({
+                        kind: 'FINDING_ADDED',
+                        inspectionId: inspection.id,
+                        details: {
+                            category: newFinding.category,
+                            severity: newFinding.severity,
+                            estimatedCost: newFinding.estimatedCost,
+                        }
+                    });
+                    this.logger.info(`[NoSQL] Logged plan generation for ${inspectionId}`);
+                } catch (logErr) {
+                    this.logger.error(`[NoSQL] Failed to log plan generation: ${logErr}`);
+                }
+            })();
+
             return {
                 message: FINDING_MSG_CONSTANTS.FINDING_CREATE,
                 data: newFinding,
@@ -42,7 +61,7 @@ class FindingService extends Default {
         }
     }
 
-    async updateFinding(findingId: string, updateData: any) {
+    async updateFinding(findingId: string, updateData: any, reqUser: any) {
         try {
             this.logger.info('Inside FindingService - updateFinding method');
 
@@ -51,21 +70,70 @@ class FindingService extends Default {
                 throw new CustomError(FINDING_MSG_CONSTANTS.FINDING_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
             }
 
+            if (reqUser && reqUser.role === ROLE.VIEWER) {
+                throw new CustomError('Unauthorized to update finding', HTTP_STATUS.FORBIDDEN);
+            }
+
+
+            console.log('Update Data:', updateData);
+
             const updatedFinding = await prisma.finding.update({
                 where: { id: findingId },
                 data: {
                     ...updateData,
-                    updatedAt: new Date(),
+                    updatedBy: reqUser.id, // ✅ Use updatedBy instead of updater
                 },
+                include: {
+                    updater: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true
+                        }
+                    },
+                    inspection: {
+                        select: {
+                            id: true,
+                            date: true,
+                            turbine: {
+                                select: {
+                                    id: true,
+                                    name: true
+                                }
+                            }
+                        }
+                    }
+                }
             });
+
+            // We don't await this because we don't want to block the main response if logging fails
+            (async () => {
+                try {
+                    await InspectionLog.create({
+                        kind: 'FINDING_UPDATED',
+                        inspectionId: existingFinding.inspectionId,
+                        details: {
+                            category: updatedFinding.category,
+                            severity: updatedFinding.severity,
+                            estimatedCost: updatedFinding.estimatedCost,
+                        }
+                    });
+                    this.logger.info(`[NoSQL] Logged plan generation for ${existingFinding.id}`);
+                } catch (logErr) {
+                    this.logger.error(`[NoSQL] Failed to log plan generation: ${logErr}`);
+                }
+            })();
 
             return {
                 message: FINDING_MSG_CONSTANTS.FINDING_UPDATE,
                 data: updatedFinding,
             };
         } catch (error: any) {
-            this.logger.error(`Error in updateFinding: ${error.message}`);
-            throw new CustomError('Error updating finding', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+            this.logger.error(`Error in updateFinding: ${error.message || error}`);
+            throw new CustomError(
+                (error instanceof CustomError) ? error.message : 'Error updating finding',
+                error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR
+            );
         }
     }
 
@@ -74,8 +142,8 @@ class FindingService extends Default {
             this.logger.info('Inside FindingService - fetchFindings method');
 
             // Construct dynamic where clause
-            const whereClause: any = { 
-                inspectionId 
+            const whereClause: any = {
+                inspectionId
             };
 
             // If search term exists, filter by notes
@@ -88,7 +156,7 @@ class FindingService extends Default {
 
             console.log('Where Clause:', whereClause);
 
-            const findings = await prisma.finding.findMany({where:  whereClause , include : { creator: { select: { id: true, name: true, email: true } } }});
+            const findings = await prisma.finding.findMany({ where: whereClause, include: { creator: { select: { id: true, name: true, email: true } } } });
 
             return {
                 message: FINDING_MSG_CONSTANTS.FINDING_FETCHED,

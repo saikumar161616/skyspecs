@@ -13,7 +13,7 @@ router.post('/:inspectionId',
 );
 
 // update finding
-router.put('/:id',
+router.patch('/:id',
     (req, res, next) => authMiddleware.verifyToken(req, res, next),
     (req, res, next) => findingMiddleware.prepareUpdateFinding(req, res, next),
     (req, res) => findingController.updateFindingController(req, res)

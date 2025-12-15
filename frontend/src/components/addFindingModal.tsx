@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Form, Button, Alert } from 'react-bootstrap';
 import { findingApi } from '../api/rest'; // Ensure this is exported in rest.ts
 import { toast } from 'react-toastify';
+
+
+// Define Interface locally or import it if you have a shared types file
+interface Finding {
+    id: string;
+    category: string;
+    severity: number;
+    estimatedCost?: number;
+    notes: string;
+}
 
 interface AddFindingModalProps {
     show: boolean;
     handleClose: () => void;
     inspectionId: string;
     onSuccess: () => void; // Callback to refresh the list after adding
+    findingToEdit?: Finding | null;
 }
 
-const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, inspectionId, onSuccess }) => {
+const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, inspectionId, onSuccess, findingToEdit }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -20,6 +31,27 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
         estimatedCost: 0,
         notes: ''
     });
+
+
+    // NEW: Effect to populate form when editing
+    useEffect(() => {
+        if (findingToEdit) {
+            setFormData({
+                category: findingToEdit.category,
+                severity: findingToEdit.severity,
+                estimatedCost: findingToEdit.estimatedCost || 0,
+                notes: findingToEdit.notes || ''
+            });
+        } else {
+            // Reset to defaults if adding new
+            setFormData({
+                category: 'BLADE_DAMAGE',
+                severity: 1,
+                estimatedCost: 0,
+                notes: ''
+            });
+        }
+    }, [findingToEdit, show]);
 
 
     const validateForm = () => {
@@ -52,15 +84,37 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
 
         try {
             // Construct payload based on Prisma schema & Validation
-            const payload = {
-                ...formData,
-                inspectionId,
+            // const payload = {
+            //     ...formData,
+            //     inspectionId,
+            //     severity: Number(formData.severity),
+            //     estimatedCost: Number(formData.estimatedCost)
+            // };
+
+            const basePayload = {
+                category: formData.category,
                 severity: Number(formData.severity),
-                estimatedCost: Number(formData.estimatedCost)
+                estimatedCost: Number(formData.estimatedCost),
+                notes: formData.notes || null
             };
 
-            await findingApi.create(payload, inspectionId);
-            toast.success('Finding added successfully');
+            // await findingApi.create(payload, inspectionId);
+
+            if (findingToEdit) {
+                // EDIT MODE
+                await findingApi.update(findingToEdit.id, basePayload);
+                toast.success('Finding updated successfully');
+            }
+            else {
+                // CREATE MODE
+                const createPayload = {
+                    ...basePayload,
+                    inspectionId
+                };
+
+                await findingApi.create(createPayload, inspectionId);
+                toast.success('Finding added successfully');
+            }
 
             // Reset form for next use
             setFormData({
@@ -148,9 +202,12 @@ const AddFindingModal: React.FC<AddFindingModalProps> = ({ show, handleClose, in
                         <Button variant="secondary" onClick={handleClose}>
                             Cancel
                         </Button>
-                        <Button variant="primary" type="submit" disabled={loading}>
-                            {loading ? 'Saving...' : 'Add Finding'}
-                        </Button>
+                        <div className="d-flex justify-content-end gap-2">
+
+                            <Button variant="primary" type="submit" disabled={loading}>
+                                {loading ? 'Saving...' : (findingToEdit ? 'Update Finding' : 'Add Finding')}
+                            </Button>
+                        </div>
                     </div>
                 </Form>
             </Modal.Body>

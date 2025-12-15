@@ -5,6 +5,7 @@ import REPAIR_PLAN_MSG_CONSTANTS from './repairPlan.constant';
 import { prisma } from '../../config/prisma';
 import { ROLE, PRIORITY } from '../../constants/feild.constants';
 import socketMessage from '../../config/socket';
+import InspectionLog from '../inspectionlogs/inspectionlog.model';
 
 class RepairPlanService extends Default {
     constructor() {
@@ -121,12 +122,29 @@ class RepairPlanService extends Default {
                 }
             });
 
-
             await socketMessage.sendMessage({
                 type: 'REPAIR_PLAN_GENERATED',
                 inspectionId: inspectionId,
                 data: repairPlan
             });
+
+            // We don't await this because we don't want to block the main response if logging fails
+            (async () => {
+                try {
+                    await InspectionLog.create({
+                        kind: 'PLAN_GENERATED',
+                        inspectionId: inspectionId,
+                        details: {
+                            totalCost: repairPlan.totalEstimatedCost,
+                            priority: repairPlan.priority,
+                            findingsCount: findings.length
+                        }
+                    });
+                    this.logger.info(`[NoSQL] Logged plan generation for ${inspectionId}`);
+                } catch (logErr) {
+                    this.logger.error(`[NoSQL] Failed to log plan generation: ${logErr}`);
+                }
+            })();
 
             return {
                 message: REPAIR_PLAN_MSG_CONSTANTS.REPAIR_PLAN_CREATE,

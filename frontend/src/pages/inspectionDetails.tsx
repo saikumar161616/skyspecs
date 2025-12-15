@@ -294,7 +294,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Button, Row, Col, Table, Badge, Container, Spinner, Tab, Tabs, Alert, Form } from 'react-bootstrap';
-import { inspectionApi, repairPlanApi, findingApi } from '../api/rest';
+import { inspectionApi, repairPlanApi, findingApi, logApi } from '../api/rest';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/authContext';
 import AddFindingModal from '../components/addFindingModal';
@@ -308,6 +308,10 @@ interface Finding {
     estimatedCost?: number; // Marked as optional
     notes: string;
     status: string;
+    creator?: {         // <--- Added this
+        id: string;
+        name: string;
+    };
 }
 
 interface RepairPlan {
@@ -339,6 +343,13 @@ interface Inspection {
     findings?: Finding[];
 }
 
+interface InspectionLog {
+    _id: string;
+    kind: string;
+    date: string;
+    details: any;
+}
+
 const InspectionDetails: React.FC = () => {
     // ... (state and hooks remain the same)
     const { id } = useParams<{ id: string }>();
@@ -351,10 +362,24 @@ const InspectionDetails: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('findings');
     const [showAddFinding, setShowAddFinding] = useState(false);
+    const [findingToEdit, setFindingToEdit] = useState<Finding | null>(null);
+    const [logs, setLogs] = useState<InspectionLog[]>([]); // New State for Logs
 
 
     // NEW: State for search term
     const [searchTerm, setSearchTerm] = useState('');
+
+
+    const handleOpenAdd = () => {
+        setFindingToEdit(null); // Clear edit state
+        setShowAddFinding(true);
+    };
+
+
+    const handleOpenEdit = (finding: Finding) => {
+        setFindingToEdit(finding); // Set finding to edit
+        setShowAddFinding(true);
+    };
 
 
     useEffect(() => {
@@ -415,6 +440,12 @@ const InspectionDetails: React.FC = () => {
                 setRepairPlan(null);
             }
 
+            // [INSERT] Fetch Logs
+            try {
+                const logRes = await logApi.getByInspectionId(id);
+                setLogs(logRes.data.data);
+            } catch (err) { console.error('Failed to load logs'); }
+
         } catch (error) {
             toast.error('Failed to load inspection details');
             navigate('/inspections');
@@ -455,9 +486,9 @@ const InspectionDetails: React.FC = () => {
 
     const handleSearchFindings = async (term: string) => {
         //if (term.trim() !== '') {
-            const inspRes = await findingApi.getFindingsById(id, term);
-            setFinding(inspRes.data.data);
-            setSearchTerm(term);
+        const inspRes = await findingApi.getFindingsById(id, term);
+        setFinding(inspRes.data.data);
+        setSearchTerm(term);
         //}
     }
 
@@ -553,33 +584,57 @@ const InspectionDetails: React.FC = () => {
                                         <th>Est. Cost</th>
                                         <th>Notes</th>
                                         <th>Created By </th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {finding && finding.length > 0 ? (
-                                        finding.map((finding: any) => (
-                                            <tr key={finding.id}>
-                                                <td>{finding.category}</td>
-                                                <td>
-                                                    <Badge bg={
-                                                        finding.severity >= 4 ? 'danger' :
-                                                            finding.severity === 3 ? 'warning' : 'success'
-                                                    }>
-                                                        {finding.severity}
-                                                    </Badge>
-                                                </td>
-                                                {/* FIX: Safe check for null cost */}
-                                                <td>${(finding.estimatedCost || 0).toLocaleString()}</td>
-                                                <td>{finding.notes}</td>
-                                                <td>{finding?.creator.name}</td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={4} className="text-center py-4 text-muted">
-                                                No findings recorded for this inspection yet.
-                                            </td>
-                                        </tr>
+                                    {finding && finding.length > 0 ? 
+                                    
+                                    (
+                                        finding.map((f: Finding) => {
+                                            
+                                            // 4. PERMISSION LOGIC
+                                            const isCreator = user?.id === f.creator?.id;
+                                            const isAdmin = user?.role === 'ADMIN';
+                                            const canEdit = isAdmin || (user?.role === 'ENGINEER' && isCreator);
+
+                                            return (
+                                                <tr key={f.id}>
+                                                    <td>{f.category}</td>
+                                                    <td>
+                                                        <Badge bg={
+                                                            f.severity >= 4 ? 'danger' :
+                                                                f.severity === 3 ? 'warning' : 'success'
+                                                        }>
+                                                            {f.severity}
+                                                        </Badge>
+                                                    </td>
+                                                    <td>${(f.estimatedCost || 0).toLocaleString()}</td>
+                                                    <td>{f.notes}</td>
+                                                    <td>{f.creator?.name || 'Unknown'}</td>
+                                                    <td>
+                                                        {/* 5. RENDER EDIT BUTTON CONDITIONALLY */}
+                                                        {canEdit && (
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="link" 
+                                                                className="text-decoration-none p-0"
+                                                                onClick={() => handleOpenEdit(f)}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )
+                                    : (
+                                    <tr>
+                                        <td colSpan={4} className="text-center py-4 text-muted">
+                                            No findings recorded for this inspection yet.
+                                        </td>
+                                    </tr>
                                     )}
                                 </tbody>
                             </Table>
@@ -645,18 +700,68 @@ const InspectionDetails: React.FC = () => {
                         </Card>
                     )}
                 </Tab>
+
+                {/* [INSERT] NEW LOGS TAB */}
+                <Tab eventKey="logs" title={`Logs (${logs.length})`}>
+                    <Card>
+                        <Card.Header className="bg-white">
+                            <h5 className="mb-0">Audit Logs</h5>
+                        </Card.Header>
+                        <Card.Body className="p-0">
+                            <Table striped hover responsive className="mb-0">
+                                <thead className="bg-light">
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Event Type</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {logs.length > 0 ? (
+                                        logs.map((log: any) => (
+                                            <tr key={log._id}>
+                                                <td style={{ width: '200px' }}>
+                                                    {new Date(log.createdAt).toLocaleString()}
+                                                </td>
+                                                <td>
+                                                    <Badge bg="secondary">{log.kind}</Badge>
+                                                </td>
+                                                <td>
+                                                    <pre className="m-0" style={{ fontSize: '0.85rem' }}>
+                                                        {JSON.stringify(log.details, null, 2)}
+                                                    </pre>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={3} className="text-center py-4 text-muted">
+                                                No logs recorded yet.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </Table>
+                        </Card.Body>
+                    </Card>
+                </Tab>
+
             </Tabs>
 
             {/* ... (AddFindingModal remains the same) */}
-            {id && (
-                <AddFindingModal
-                    show={showAddFinding}
-                    handleClose={() => setShowAddFinding(false)}
-                    inspectionId={id}
-                    onSuccess={loadData} // Reloads the page data after success
-                />
-            )}
-        </Container>
+            {
+                id && (
+                    <AddFindingModal
+                        show={showAddFinding}
+                        handleClose={() => setShowAddFinding(false)}
+                        inspectionId={id}
+                        onSuccess={loadData} // Reloads the page data after success
+                        findingToEdit={findingToEdit} // <--- Pass the prop
+                    />
+
+                )
+            }
+        </Container >
     );
 };
 

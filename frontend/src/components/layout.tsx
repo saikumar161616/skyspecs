@@ -25,7 +25,7 @@ const Layout: React.FC = () => {
               <Nav className="me-auto">
                 
                 {/* USERS: Only visible to ADMIN */}
-                {user.role === 'ADMIN' && (
+                {(user.role === 'ADMIN' || user?.role === 'VIEWER' ) && (
                   <Nav.Link 
                     as={Link} 
                     to="/users" 

@@ -3,6 +3,8 @@ import { Table, Button, Form, Row, Col, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { inspectionApi, turbineApi } from '../api/rest';
 import { toast } from 'react-toastify';
+import { useAuth } from '../context/authContext';
+
 
 interface Inspection {
     id: string;
@@ -20,6 +22,7 @@ interface Turbine {
 }
 
 const Inspections: React.FC = () => {
+    const { user } = useAuth();
     const [inspections, setInspections] = useState<Inspection[]>([]);
     const [turbines, setTurbines] = useState<Turbine[]>([]);
     const [filters, setFilters] = useState({ turbineId: '', date: '', dataSource: '' });
@@ -62,7 +65,12 @@ const Inspections: React.FC = () => {
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1>Inspections</h1>
-                <Link to="/inspections/new" className="btn btn-primary">+ New Inspection</Link>
+                {user?.role !== 'VIEWER' && (
+                    <Link to="/inspections/new" className="btn btn-primary">
+                        + New Inspection
+                    </Link>
+                )}
+                {/* <Link to="/inspections/new" className="btn btn-primary">+ New Inspection</Link> */}
             </div>
 
             <Row className="mb-3 bg-light p-3 rounded">
