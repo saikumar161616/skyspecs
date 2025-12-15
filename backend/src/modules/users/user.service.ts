@@ -105,7 +105,6 @@ class UserService extends Default {
             // Remove passwordHash
             const { passwordHash, ...userWithoutPassword } = user;
 
-
             // generate token logic
             const token = await this.jwtTokenGenerator(userWithoutPassword);
 
@@ -117,6 +116,7 @@ class UserService extends Default {
 
 
         } catch (error: any) {
+            console.log(error);
             this.logger.error(`Inside UserService - loginUser method - Error while logging in user: ${error}`);
             throw new CustomError((error instanceof CustomError) ? error.message : 'Error! Please try again later', error.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR);
         }

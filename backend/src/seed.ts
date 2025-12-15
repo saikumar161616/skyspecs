@@ -15,8 +15,8 @@ async function main() {
     const hash = await bcrypt.hash(u.password, 10);
     await prisma.user.upsert({
       where: { email: u.email },
-      update: { passwordHash: hash, role: u.role as Role, name: u.name },
-      create: { email: u.email, passwordHash: hash, role: u.role as Role, name: u.name },
+      update: { passwordHash: hash, role: u.role as Role, name: u.name, status: 'ACTIVE' },
+      create: { email: u.email, passwordHash: hash, role: u.role as Role, name: u.name, status: 'ACTIVE' },
     });
   }
 
@@ -24,7 +24,15 @@ async function main() {
   const t = await prisma.turbine.upsert({
     where: { id: 'seed-turbine' },
     update: {},
-    create: { id: 'seed-turbine', name: 'T-1000', manufacturer: 'SkyGen', mwRating: 2.5, lat: 12.98, lng: 77.59 },
+    create: {
+      id: 'seed-turbine',
+      name: 'T-1000',
+      manufacturer: 'SkyGen',
+      mwRating: 2.5,
+      lat: 12.98,
+      lng: 77.59,
+      status: 'OPERATIONAL' // Added status
+    },
   });
 
   console.log('Seeded. Turbine:', t.name);

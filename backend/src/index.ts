@@ -158,8 +158,7 @@ import bodyparser from 'body-parser'; // the body-parser middleware is used to p
 import cors, { CorsOptions } from 'cors';
 import morgan from 'morgan';
 import http from 'http';
-import socketMessage  from '../../backend/src/config/socket'; // Import our new helper
-
+import socketMessage from './config/socket';
 import helmet from 'helmet';
 
 import config from '../src/config/config';

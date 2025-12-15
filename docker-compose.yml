@@ -3,8 +3,8 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
+      POSTGRES_USER: sai
+      POSTGRES_PASSWORD: 1234
       POSTGRES_DB: turbineops
     ports:
       - "5432:5432"
@@ -24,3 +24,51 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  # Application Services
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    environment:
+      # Override localhost with service names
+      NODE_ENV: production
+      PORT: 4000
+      # Ensure these match the postgres service credentials
+      SQL_DATABASE_URL: postgresql://sai:1234@localhost:5432/turbineops?schema=public
+      MONGO_DATABASE_URL: mongodb://mongo:27017/turbineops
+      # This points to the frontend container or public URL
+      CLIENT_URL: http://localhost:5173
+      JWT_SECRET_KEY: 0a6b944d-d2fb-46fc-a85e-0295c986cd9f
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80" # Map host port 5173 to container port 80 (nginx)
+    environment:
+      # Note: Vite builds strict static files. Environment variables
+      # usually need to be present at build time or passed via specific runtime config.
+      # Since your frontend Dockerfile runs 'npm run build', we must ensure
+      # the API URL is set correctly during build if it's hardcoded.
+      VITE_API_BASE: http://localhost:4000/api
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
