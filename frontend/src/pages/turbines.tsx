@@ -325,7 +325,6 @@ const Turbines: React.FC = () => {
                 <option value="">Select Status</option>
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
-                <option value="MAINTENANCE">MAINTENANCE</option>
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-2">
